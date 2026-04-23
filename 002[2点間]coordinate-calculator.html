@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>座標計算ツール v1.0 | Aiaこんぶ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74, 158, 255, 0.15);
+    --accent2: #34d399;
+    --text: #e8eaf0;
+    --text-dim: #8a8fa8;
+    --label: #6b7194;
+    --danger: #f87171;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-top: 12px;
+  }
+
+  .header-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  .header .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+
+  /* ── カード ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ── 入力フォーム ── */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .input-group label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .input-group input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  .input-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .input-group input::placeholder {
+    color: var(--label);
+    font-size: 12px;
+  }
+
+  .point-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .point-label.p2 {
+    color: var(--accent2);
+    margin-top: 4px;
+  }
+
+  /* ── ボタン ── */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { color: var(--text); border-color: var(--text-dim); }
+
+  /* ── 結果表示 ── */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .result-card.show { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-item {
+    margin-bottom: 16px;
+  }
+
+  .result-item:last-child { margin-bottom: 0; }
+
+  .result-label {
+    font-size: 11px;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .result-value .unit {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+
+  .result-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ── 方位角切り替え ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .toggle-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toggle-btn.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── 差分表示 ── */
+  .diff-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .diff-item .result-value {
+    font-size: 16px;
+  }
+
+  /* ── エラー ── */
+  .error-msg {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  /* ── フッター ── */
+  .footer {
+    text-align: center;
+    padding: 16px 0;
+    font-size: 11px;
+    color: var(--label);
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* ── レスポンシブ ── */
+  @media (max-width: 400px) {
+    body { padding: 12px; }
+    .result-value { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-icon">📐</div>
+    <h1>座標計算ツール</h1>
+    <span class="version">v1.0</span>
+  </div>
+
+  <!-- 入力カード -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>座標入力（平面直角座標系）</div>
+
+    <div class="point-label">P1 — 始点</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>X（北方向）</label>
+        <input type="text" id="x1" inputmode="decimal" placeholder="-12345.678">
+      </div>
+      <div class="input-group">
+        <label>Y（東方向）</label>
+        <input type="text" id="y1" inputmode="decimal" placeholder="67890.123">
+      </div>
+    </div>
+
+    <div class="point-label p2">P2 — 終点</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>X（北方向）</label>
+        <input type="text" id="x2" inputmode="decimal" placeholder="-12300.000">
+      </div>
+      <div class="input-group">
+        <label>Y（東方向）</label>
+        <input type="text" id="y2" inputmode="decimal" placeholder="67900.000">
+      </div>
+    </div>
+
+    <div class="error-msg" id="error"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calculate()">計算する</button>
+      <button class="btn btn-secondary" onclick="clearAll()">クリア</button>
+    </div>
+  </div>
+
+  <!-- 結果カード -->
+  <div class="result-card" id="result">
+    <div class="card-title"><span class="dot"></span>計算結果</div>
+
+    <!-- 距離 -->
+    <div class="result-item">
+      <div class="result-label">水平距離</div>
+      <div class="result-value" id="distance">—</div>
+    </div>
+
+    <!-- 方位角 -->
+    <div class="result-item">
+      <div class="result-label">方位角（P1 → P2）</div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btn-dms" onclick="setMode('dms')">度分秒</button>
+        <button class="toggle-btn" id="btn-deg" onclick="setMode('deg')">10進度</button>
+      </div>
+      <div class="result-value" id="azimuth">—</div>
+      <div class="result-sub" id="azimuth-sub"></div>
+    </div>
+
+    <!-- ΔX, ΔY -->
+    <div class="result-item">
+      <div class="result-label">座標差</div>
+      <div class="diff-row">
+        <div class="diff-item">
+          <div class="result-value" id="dx">—</div>
+        </div>
+        <div class="diff-item">
+          <div class="result-value" id="dy">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">No.002 座標計算ツール — Aiaこんぶ ツール部</div>
+</div>
+
+<script>
+  let currentMode = 'dms';
+  let calcResult = null;
+
+  function parseNum(id) {
+    const v = document.getElementById(id).value.trim();
+    if (v === '') return NaN;
+    return parseFloat(v);
+  }
+
+  function calculate() {
+    const x1 = parseNum('x1');
+    const y1 = parseNum('y1');
+    const x2 = parseNum('x2');
+    const y2 = parseNum('y2');
+
+    const errEl = document.getElementById('error');
+
+    if ([x1, y1, x2, y2].some(v => isNaN(v))) {
+      errEl.textContent = '※ すべての座標を数値で入力してください';
+      errEl.classList.add('show');
+      document.getElementById('result').classList.remove('show');
+      return;
+    }
+
+    errEl.classList.remove('show');
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // 方位角: 北(X軸正)を0°、時計回りに360°
+    let azRad = Math.atan2(dy, dx);
+    let azDeg = azRad * 180 / Math.PI;
+    if (azDeg < 0) azDeg += 360;
+
+    calcResult = { dist, azDeg, dx, dy };
+    showResult();
+  }
+
+  function showResult() {
+    if (!calcResult) return;
+    const { dist, azDeg, dx, dy } = calcResult;
+
+    const resultEl = document.getElementById('result');
+    resultEl.classList.add('show');
+
+    // 距離
+    document.getElementById('distance').innerHTML =
+      dist.toFixed(4) + '<span class="unit">m</span>';
+
+    // 方位角
+    updateAzimuth();
+
+    // ΔX, ΔY
+    document.getElementById('dx').innerHTML =
+      'ΔX ' + (dx >= 0 ? '+' : '') + dx.toFixed(4) + '<span class="unit">m</span>';
+    document.getElementById('dy').innerHTML =
+      'ΔY ' + (dy >= 0 ? '+' : '') + dy.toFixed(4) + '<span class="unit">m</span>';
+  }
+
+  function updateAzimuth() {
+    if (!calcResult) return;
+    const { azDeg } = calcResult;
+
+    const azEl = document.getElementById('azimuth');
+    const subEl = document.getElementById('azimuth-sub');
+
+    if (currentMode === 'dms') {
+      const d = Math.floor(azDeg);
+      const mFloat = (azDeg - d) * 60;
+      const m = Math.floor(mFloat);
+      const s = (mFloat - m) * 60;
+      azEl.textContent = d + '° ' + String(m).padStart(2, '0') + '′ ' + s.toFixed(2).padStart(5, '0') + '″';
+      subEl.textContent = '= ' + azDeg.toFixed(6) + '°';
+    } else {
+      azEl.textContent = azDeg.toFixed(6) + '°';
+      const d = Math.floor(azDeg);
+      const mFloat = (azDeg - d) * 60;
+      const m = Math.floor(mFloat);
+      const s = (mFloat - m) * 60;
+      subEl.textContent = '= ' + d + '° ' + String(m).padStart(2, '0') + '′ ' + s.toFixed(2).padStart(5, '0') + '″';
+    }
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-dms').classList.toggle('active', mode === 'dms');
+    document.getElementById('btn-deg').classList.toggle('active', mode === 'deg');
+    updateAzimuth();
+  }
+
+  function clearAll() {
+    ['x1', 'y1', 'x2', 'y2'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result').classList.remove('show');
+    document.getElementById('error').classList.remove('show');
+    calcResult = null;
+    document.getElementById('x1').focus();
+  }
+
+  // Enterキーで計算
+  document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') calculate();
+    });
+  });
+</script>
+</body>
+</html>
