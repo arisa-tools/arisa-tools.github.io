@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>arisa-tools | ツール一覧</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2e3345;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74, 158, 255, 0.12);
+    --green: #34d399;
+    --green-glow: rgba(52, 211, 153, 0.12);
+    --orange: #fb923c;
+    --orange-glow: rgba(251, 146, 60, 0.12);
+    --text: #e8eaf0;
+    --text-dim: #8a8fa8;
+    --label: #6b7194;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-top: 20px;
+  }
+
+  .header-logo {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .header .subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .header .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 3px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  /* ── カテゴリ ── */
+  .category {
+    margin-bottom: 32px;
+  }
+
+  .category-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .category-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── ツールカード ── */
+  .tool-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+
+  .tool-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(74, 158, 255, 0.08);
+  }
+
+  .tool-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .tool-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .tool-version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .tool-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .tool-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .tool-tags {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-survey {
+    color: var(--green);
+    background: var(--green-glow);
+  }
+
+  .tag-general {
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .tag-aiakonbu {
+    color: var(--orange);
+    background: var(--orange-glow);
+  }
+
+  /* ── 空状態 ── */
+  .empty-card {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    color: var(--label);
+    font-size: 13px;
+  }
+
+  /* ── フッター ── */
+  .footer {
+    text-align: center;
+    padding: 24px 0 12px;
+    font-size: 11px;
+    color: var(--label);
+  }
+
+  /* ── アニメーション ── */
+  .tool-card {
+    animation: slideUp 0.4s ease both;
+  }
+
+  .tool-card:nth-child(1) { animation-delay: 0.05s; }
+  .tool-card:nth-child(2) { animation-delay: 0.1s; }
+  .tool-card:nth-child(3) { animation-delay: 0.15s; }
+  .tool-card:nth-child(4) { animation-delay: 0.2s; }
+  .tool-card:nth-child(5) { animation-delay: 0.25s; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-logo">🧰</div>
+    <h1>arisa-tools</h1>
+    <div class="subtitle">自作ツール一覧</div>
+    <div class="count">2 tools</div>
+  </div>
+
+  <!-- 汎用・情報処理系 -->
+  <div class="category">
+    <div class="category-title">汎用・情報処理系</div>
+
+    <a class="tool-card" href="001-privacy-masker.html">
+      <div class="tool-top">
+        <span class="tool-number">No.001</span>
+        <span class="tool-version">v1.0</span>
+      </div>
+      <div class="tool-name">プライバシーマスカー</div>
+      <div class="tool-desc">テキストの個人情報・機密情報を自動で[ラベル]に置換する</div>
+      <div class="tool-tags">
+        <span class="tag tag-general">汎用</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 測量・建設業務系 -->
+  <div class="category">
+    <div class="category-title">測量・建設業務系</div>
+
+    <a class="tool-card" href="002-coordinate-calculator.html">
+      <div class="tool-top">
+        <span class="tool-number">No.002</span>
+        <span class="tool-version">v1.0</span>
+      </div>
+      <div class="tool-name">座標計算ツール</div>
+      <div class="tool-desc">2点の座標（X,Y）から距離・方位角を計算する</div>
+      <div class="tool-tags">
+        <span class="tag tag-survey">測量</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Aiaこんぶ運営系（将来用） -->
+  <!--
+  <div class="category">
+    <div class="category-title">Aiaこんぶ運営系</div>
+    <div class="empty-card">準備中...</div>
+  </div>
+  -->
+
+  <div class="footer">Powered by Aiaこんぶ ツール部</div>
+
+</div>
+
+</body>
+</html>
