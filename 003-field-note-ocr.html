@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>野帳OCR v1.0 | arisa-tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fffcf5;
+    --surface2: #f0ebe0;
+    --border: #d9d0c0;
+    --accent: #2d6a4f;
+    --accent-light: rgba(45, 106, 79, 0.1);
+    --accent2: #b45309;
+    --accent2-light: rgba(180, 83, 9, 0.1);
+    --text: #2c2416;
+    --text-dim: #7a7060;
+    --label: #9a8e7e;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .container {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-top: 12px;
+  }
+
+  .header-icon { font-size: 32px; margin-bottom: 4px; }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .header .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+
+  /* ── カード ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--label);
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ── APIキー入力 ── */
+  .api-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .api-input {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-input:focus {
+    border-color: var(--accent);
+  }
+
+  .api-input::placeholder {
+    color: var(--label);
+    font-size: 11px;
+  }
+
+  .api-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+
+  .api-toggle:hover { background: var(--border); }
+
+  .api-note {
+    font-size: 11px;
+    color: var(--label);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  /* ── 撮影エリア ── */
+  .capture-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+
+  .capture-area:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .capture-area.has-image {
+    padding: 8px;
+    border-style: solid;
+    border-color: var(--accent);
+  }
+
+  .capture-icon { font-size: 40px; margin-bottom: 8px; }
+
+  .capture-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .capture-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .capture-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .preview-img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 6px;
+    display: none;
+  }
+
+  .preview-img.show { display: block; margin: 0 auto; }
+
+  .capture-placeholder { display: block; }
+  .capture-area.has-image .capture-placeholder { display: none; }
+
+  /* ── ボタン ── */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    padding: 13px 0;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
+
+  /* ── ステータス ── */
+  .status {
+    text-align: center;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    display: none;
+  }
+
+  .status.show { display: block; }
+
+  .status .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status.error { color: var(--danger); }
+
+  /* ── 結果表示 ── */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+    box-shadow: 0 2px 8px rgba(45, 106, 79, 0.08);
+  }
+
+  .result-card.show { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+
+  .copy-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .copy-btn:active { transform: scale(0.97); }
+  .copy-btn:hover { opacity: 0.9; }
+  .copy-btn.copied { background: var(--success); }
+
+  /* ── フッター ── */
+  .footer {
+    text-align: center;
+    padding: 16px 0;
+    font-size: 11px;
+    color: var(--label);
+  }
+
+  /* ── セキュリティ注意 ── */
+  .security-note {
+    font-size: 10px;
+    color: var(--label);
+    text-align: center;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .security-note .lock { margin-right: 2px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-icon">📒</div>
+    <h1>野帳OCR</h1>
+    <span class="version">v1.0</span>
+  </div>
+
+  <!-- APIキー入力 -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Gemini APIキー</div>
+    <div class="api-row">
+      <input type="password" class="api-input" id="apiKey" placeholder="APIキーを貼り付け">
+      <button class="api-toggle" id="apiToggle" onclick="toggleApiKey()">👁</button>
+    </div>
+    <div class="api-note">※ APIキーはサーバーに保存されません。ページを閉じると消去されます。</div>
+  </div>
+
+  <!-- 撮影・画像選択 -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>野帳を撮影 / 画像を選択</div>
+
+    <div class="capture-area" id="captureArea">
+      <div class="capture-placeholder">
+        <div class="capture-icon">📷</div>
+        <div class="capture-text">タップして撮影・選択</div>
+        <div class="capture-sub">カメラ撮影またはカメラロールから選択</div>
+      </div>
+      <img class="preview-img" id="preview">
+      <input type="file" accept="image/*" capture="environment" id="fileInput" onchange="handleFile(event)">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="ocrBtn" onclick="runOCR()" disabled>読み取る</button>
+      <button class="btn btn-secondary" onclick="clearAll()">クリア</button>
+    </div>
+  </div>
+
+  <!-- ステータス -->
+  <div class="status" id="status">
+    <span class="spinner"></span>読み取り中...
+  </div>
+
+  <!-- 結果 -->
+  <div class="result-card" id="result">
+    <div class="card-title"><span class="dot"></span>読み取り結果</div>
+    <div class="result-text" id="resultText"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyResult()">コピーする</button>
+  </div>
+
+  <div class="security-note">
+    <span class="lock">🔒</span>画像・APIキーはサーバーに保存されません<br>
+    すべての処理はブラウザ ↔ Gemini API間で完結します
+  </div>
+
+  <div class="footer">No.003 野帳OCR — arisa-tools</div>
+
+</div>
+
+<script>
+  let selectedFile = null;
+  let base64Image = null;
+
+  function toggleApiKey() {
+    const input = document.getElementById('apiKey');
+    const btn = document.getElementById('apiToggle');
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🔒';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁';
+    }
+  }
+
+  function handleFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('preview');
+      img.src = e.target.result;
+      img.classList.add('show');
+      document.getElementById('captureArea').classList.add('has-image');
+      document.getElementById('ocrBtn').disabled = false;
+
+      // base64を抽出（data:image/...;base64, を除去）
+      base64Image = e.target.result.split(',')[1];
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function runOCR() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) {
+      showError('APIキーを入力してください');
+      return;
+    }
+    if (!base64Image) {
+      showError('画像を選択してください');
+      return;
+    }
+
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    const ocrBtn = document.getElementById('ocrBtn');
+
+    // UIリセット
+    resultEl.classList.remove('show');
+    statusEl.className = 'status show';
+    statusEl.innerHTML = '<span class="spinner"></span>読み取り中...';
+    ocrBtn.disabled = true;
+
+    try {
+      const mimeType = selectedFile.type || 'image/jpeg';
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: mimeType,
+                    data: base64Image
+                  }
+                },
+                {
+                  text: "この画像は測量の野帳（フィールドノート）です。画像に書かれている文字・数値・記号をすべて正確に読み取り、テキストとして出力してください。表形式のデータがある場合は、行と列の構造を維持してください。手書き文字が不鮮明な場合は、最も可能性の高い文字を出力し、不確かな箇所には[?]を付けてください。"
+                }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 4096
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData?.error?.message || `エラー (${response.status})`;
+        throw new Error(errMsg);
+      }
+
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) {
+        throw new Error('テキストを読み取れませんでした');
+      }
+
+      // 結果表示
+      statusEl.classList.remove('show');
+      document.getElementById('resultText').textContent = text;
+      resultEl.classList.add('show');
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      ocrBtn.disabled = false;
+    }
+  }
+
+  function showError(msg) {
+    const statusEl = document.getElementById('status');
+    statusEl.className = 'status show error';
+    statusEl.innerHTML = '⚠ ' + msg;
+  }
+
+  function copyResult() {
+    const text = document.getElementById('resultText').textContent;
+    const btn = document.getElementById('copyBtn');
+
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'コピーしました ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'コピーする';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // フォールバック
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = 'コピーしました ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'コピーする';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function clearAll() {
+    selectedFile = null;
+    base64Image = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('preview').classList.remove('show');
+    document.getElementById('preview').src = '';
+    document.getElementById('captureArea').classList.remove('has-image');
+    document.getElementById('ocrBtn').disabled = true;
+    document.getElementById('status').classList.remove('show');
+    document.getElementById('result').classList.remove('show');
+    document.getElementById('copyBtn').textContent = 'コピーする';
+    document.getElementById('copyBtn').classList.remove('copied');
+  }
+</script>
+
+</body>
+</html>
