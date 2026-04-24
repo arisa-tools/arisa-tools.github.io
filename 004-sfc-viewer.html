@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>SFCビューアー v3.5 | arisa-tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root{--bg:#1b1e2b;--surface:#232738;--surface2:#2a2f44;--border:#363c55;--accent:#5eead4;--accent-glow:rgba(94,234,212,0.12);--text:#e8ecf4;--text-dim:#8690b0;--label:#636d8c;--danger:#f87171;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+  .header-left{display:flex;align-items:center;gap:10px;}
+  .header-icon{font-size:22px;}.header h1{font-size:16px;font-weight:900;}
+  .header .version{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);background:var(--accent-glow);padding:2px 8px;border-radius:12px;}
+  .file-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .toolbar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+  .tool-btn{font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:500;background:var(--surface);color:var(--text-dim);border:1px solid var(--border);border-radius:6px;padding:6px 12px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .tool-btn:hover{color:var(--text);border-color:var(--text-dim);}.tool-btn:active{transform:scale(.96);}
+  .tool-btn.active{background:var(--accent-glow);color:var(--accent);border-color:var(--accent);}
+  .toolbar-sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
+  .zoom-display{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);min-width:50px;text-align:center;}
+  .info-display{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--label);margin-left:auto;}
+  .canvas-wrapper{flex:1;position:relative;overflow:hidden;background:#888888;cursor:grab;}.canvas-wrapper:active{cursor:grabbing;}
+  canvas{position:absolute;top:0;left:0;}
+  .drop-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(27,30,43,.95);z-index:100;}
+  .drop-overlay.hidden{display:none;}.drop-overlay.drag-over{background:rgba(94,234,212,.08);}
+  .drop-icon{font-size:56px;margin-bottom:16px;}.drop-title{font-size:20px;font-weight:900;margin-bottom:6px;}.drop-sub{font-size:14px;color:var(--text-dim);margin-bottom:20px;}
+  .drop-btn{font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:12px 32px;cursor:pointer;position:relative;}
+  .drop-btn:hover{opacity:.9;}.drop-btn input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .error-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;font-size:13px;font-weight:500;padding:10px 20px;border-radius:8px;z-index:200;display:none;}
+  .error-toast.show{display:block;}
+  .footer-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:var(--surface);border-top:1px solid var(--border);font-size:11px;color:var(--label);flex-shrink:0;}
+  .coord-display{font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left"><span class="header-icon">📐</span><h1>SFCビューアー</h1><span class="version">v3.5</span></div>
+  <span class="file-name" id="fileName">ファイル未選択</span>
+</div>
+<div class="toolbar">
+  <button class="tool-btn" onclick="zoomIn()">＋ 拡大</button>
+  <button class="tool-btn" onclick="zoomOut()">－ 縮小</button>
+  <button class="tool-btn" onclick="fitToView()">⊞ 全体表示</button>
+  <div class="toolbar-sep"></div>
+  <input class="zoom-display" id="zoomDisplay" value="100%" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);text-align:center;cursor:text;width:60px;" onchange="setZoomFromInput(this.value)" onclick="this.select()">
+  <div class="toolbar-sep"></div>
+  <button class="tool-btn active" id="toggleText" onclick="toggleText()">Ａ 文字</button>
+  
+  <button class="tool-btn" id="toggleBg" onclick="toggleBg()">🗒 用紙色</button>
+  <button class="tool-btn" onclick="document.getElementById('hiddenFile').click()">📂 開く</button>
+  <span class="info-display" id="infoDisplay"></span>
+</div>
+<div class="canvas-wrapper" id="wrap">
+  <canvas id="cv"></canvas>
+  <div class="drop-overlay" id="dropOverlay">
+    <div class="drop-icon">📐</div>
+    <div class="drop-title">SFCファイルを開く</div>
+    <div class="drop-sub">ドラッグ＆ドロップ または ボタンで選択</div>
+    <div class="drop-btn">ファイルを選択<input type="file" accept=".sfc,.SFC,.p21,.P21" onchange="onFile(event)"></div>
+  </div>
+</div>
+<div class="footer-bar">
+  <span>No.004 SFCビューアー — arisa-tools</span>
+  <span class="coord-display" id="coordDisp">X: — Y: —</span>
+</div>
+<div class="error-toast" id="errToast"></div>
+<input type="file" accept=".sfc,.SFC,.p21,.P21" id="hiddenFile" style="display:none" onchange="onFile(event)">
+
+<script>
+const cv=document.getElementById('cv'),c=cv.getContext('2d'),wrap=document.getElementById('wrap');
+let D=null,V={ox:0,oy:0,s:1},dragging=false,dragX=0,dragY=0,showTxt=true,invertWhite=false,darkBg=false,baseScale=1;
+
+const COLORS={'black':'#000000','white':'#ffffff','red':'#ff0000','green':'#00aa00',
+  'blue':'#0000ff','yellow':'#cccc00','magenta':'#ff00ff','cyan':'#00cccc',
+  'orange':'#ff8800','lightgreen':'#00cc00','lightblue':'#4488ff','darkgray':'#888888'};
+
+// SXF標準線幅パレット (mm)
+const SXF_STD_WIDTHS={1:0.13,2:0.18,3:0.25,4:0.35,5:0.50,6:0.70,7:1.00,8:1.40,9:2.00};
+
+// SXF標準固定色番号 (仕様固定、ファイル定義より優先)
+const SXF_STD_COLORS={
+  1:'#000000', // 黒
+  2:'#ff0000', // 赤
+  3:'#00ff00', // 緑
+  4:'#0000ff', // 青
+  5:'#00ffff', // シアン
+  6:'#ff00ff', // マゼンタ
+  7:'#ffff00', // 黄
+  8:'#ffffff', // 白（背景色）
+  9:'#808080', // グレー
+  10:'#ff8800',// オレンジ
+  11:'#00cc44',// 薄緑
+  12:'#ff8800',// オレンジ系
+  13:'#880000',// 暗赤
+  14:'#008800',// 暗緑
+  15:'#000088',// 暗青
+  16:'#c0c0c0',// 明グレー
+};
+
+function parse(text){
+  text=text.replace(/\u00a5/g,'\\');
+  const blocks=[];
+  const lines=text.split(/\r?\n/);
+  let inB=false,bc='';
+  for(const line of lines){
+    const t=line.trim();
+    if(t==='/*SXF'){inB=true;bc='';continue;}
+    if(t==='SXF*/'){inB=false;if(bc)blocks.push(bc.trim());continue;}
+    if(inB)bc+=(bc?' ':'')+t;
+  }
+
+  const raw={colors:{},colorList:[],widths:{},widthList:[],sheetW:0,sheetH:0,sfigDefs:{},locates:[]};
+  let curSfig=null;
+
+  // Pass 1: parse all blocks
+  const parsed=[];
+  for(const block of blocks){
+    const m=block.match(/^#(\d+)\s*=\s*(\w+)\(([\s\S]*)\)$/);
+    if(!m)continue;
+    parsed.push({id:+m[1],type:m[2],raw:m[3]});
+  }
+
+  // Pass 2: build sfig defs and locate list
+  for(const p of parsed){
+    if(p.type==='pre_defined_colour_feature'){raw.colorList.push(COLORS[gStr(p.raw)]||'#000');continue;}
+    if(p.type==='user_defined_colour_feature'){const a=spl(p.raw);raw.colorList.push(`rgb(${nv(a[0])},${nv(a[1])},${nv(a[2])})`);continue;}
+    if(p.type==='width_feature'){raw.widthList.push(nv(spl(p.raw)[0]));continue;}
+    if(p.type==='drawing_sheet_feature'){const a=spl(p.raw);raw.sheetW=nv(a[3])||841;raw.sheetH=nv(a[4])||594;continue;}
+
+    if(p.type==='sfig_org_feature'){
+      const a=spl(p.raw);curSfig=gStr(a[0]);
+      if(!raw.sfigDefs[curSfig])raw.sfigDefs[curSfig]={elements:[]};
+      continue;
+    }
+    if(p.type==='sfig_locate_feature'){
+      const a=spl(p.raw);
+      raw.locates.push({id:p.id,name:gStr(a[1]),ox:nv(a[2]),oy:nv(a[3]),angle:nv(a[4]),sx:nv(a[5]),sy:nv(a[6])});
+      curSfig=null;continue;
+    }
+
+    const elem=parseElem(p.type,p.raw);
+    if(!elem)continue;
+    if(curSfig&&raw.sfigDefs[curSfig])raw.sfigDefs[curSfig].elements.push(elem);
+    // root elements (after locate) → add with identity transform
+    else raw.locates.push({id:p.id,_rootElem:elem});
+  }
+
+  // Pass 3: resolve locates
+  // Key insight: sfig_locate with sx≠1 defines a coordinate transform context.
+  // sfig_locate with sx=1 that comes AFTER a scaled locate inherits that transform.
+  // Strategy: find all scaled locates (sx≈0.01), then apply same transform to nearby sx=1 locates.
+
+  const result={colors:raw.colors,colorList:raw.colorList,widths:raw.widths,widthList:raw.widthList,sheetW:raw.sheetW,sheetH:raw.sheetH,
+    lines:[],polylines:[],texts:[],labels:[]};
+
+  // Separate scaled locates (real→paper transform) from unit locates (direct paper coords)
+  const scaledLocates=raw.locates.filter(l=>!l._rootElem&&Math.abs((l.sx||1)-1)>0.001);
+  const unitLocates=raw.locates.filter(l=>!l._rootElem&&Math.abs((l.sx||1)-1)<=0.001);
+  const rootElems=raw.locates.filter(l=>l._rootElem);
+
+  // Process locates in ID order, tracking the "current scaled transform"
+  // Each sfig uses its own locate transform
+  // Real-coord sfigs (sx=1, large coords) inherit the most recent scaled transform
+  const allLocsSorted=[...raw.locates].filter(l=>!l._rootElem).sort((a,b)=>a.id-b.id);
+  let curScaled=null; // most recent scaled transform in file order
+
+  for(const loc of allLocsSorted){
+    const isScaled=Math.abs((loc.sx||1)-1)>0.001;
+    if(isScaled){
+      // Named sfig with its own transform → use directly
+      curScaled={ox:loc.ox,oy:loc.oy,sx:loc.sx,sy:loc.sy};
+      const def=raw.sfigDefs[loc.name];
+      if(def)for(const el of def.elements)addElem(result,el,loc.ox,loc.oy,loc.sx,loc.sy);
+    } else {
+      // Unit locate → use own transform if paper coords, or inherit curScaled if real coords
+      const def=raw.sfigDefs[loc.name];
+      if(!def||def.elements.length===0)continue;
+      if(isLargeCoordSfig(def.elements)&&curScaled){
+        for(const el of def.elements)addElem(result,el,curScaled.ox,curScaled.oy,curScaled.sx,curScaled.sy);
+      } else {
+        for(const el of def.elements)addElem(result,el,0,0,1,1);
+      }
+    }
+  }
+
+  // Root elements: グループ化してscaled_transformに対応
+  // rootElemsはraw.locatesのIDに含まれている
+  // sfig境界でグループを区切り、グループ数とscaled数を対応させる
+  const allScaled=raw.locates.filter(l=>!l._rootElem&&Math.abs((l.sx||1)-1)>0.001)
+    .sort((a,b)=>a.id-b.id);
+
+  if(allScaled.length===0){
+    // scaled変換なし → そのまま描画
+    for(const r of rootElems)addElem(result,r._rootElem,0,0,1,1);
+  } else if(allScaled.length===1){
+    // 1変換 → 全root要素に適用
+    const s=allScaled[0];
+    for(const r of rootElems){
+      const el=r._rootElem;
+      if(el&&isLargeCoordElem(el)) addElem(result,el,s.ox,s.oy,s.sx,s.sy);
+      else addElem(result,el,0,0,1,1);
+    }
+  } else {
+    // 複数変換 → root要素をIDでグループ化、各グループを各変換に対応
+    // IDの順番でグループ境界を検出（sfig_orgまたはsfig_locateのIDが間に挟まる）
+    const sfigBoundaryIds=raw.locates
+      .filter(l=>!l._rootElem)
+      .map(l=>l.id)
+      .sort((a,b)=>a-b);
+
+    // root要素をsfig境界で区切ってグループ化
+    const rootGroups=[];
+    let currentGroup=[];
+    let sfigIdx=0;
+    const rootSorted=rootElems.slice().sort((a,b)=>a.id-b.id);
+    for(const r of rootSorted){
+      // このroot要素のIDより小さいsfig境界を超えたらグループ区切り
+      while(sfigIdx<sfigBoundaryIds.length&&sfigBoundaryIds[sfigIdx]<r.id){
+        if(currentGroup.length>0){rootGroups.push(currentGroup);currentGroup=[];}
+        sfigIdx++;
+      }
+      if(r._rootElem&&isLargeCoordElem(r._rootElem))currentGroup.push(r);
+      else addElem(result,r._rootElem,0,0,1,1);
+    }
+    if(currentGroup.length>0)rootGroups.push(currentGroup);
+
+    // グループとscaled_transformを対応
+    // scaledをoy降順（上のレベルから順）でソートしてグループと対応
+    const scaledByOyDesc=[...allScaled].sort((a,b)=>b.oy-a.oy);
+    for(let gi=0;gi<rootGroups.length;gi++){
+      const si=Math.min(gi,scaledByOyDesc.length-1);
+      const s=scaledByOyDesc[si];
+      for(const r of rootGroups[gi])addElem(result,r._rootElem,s.ox,s.oy,s.sx,s.sy);
+    }
+  }
+
+  return result;
+}
+
+function isLargeCoordElem(el){
+  if(!el)return false;
+  if(el.type==='line') return Math.abs(el.x1)>1000||Math.abs(el.y1)>1000;
+  if(el.type==='polyline') return el.pts&&el.pts.some(p=>Math.abs(p.x)>1000||Math.abs(p.y)>1000);
+  if(el.type==='text'||el.type==='label') return Math.abs(el.x)>1000||Math.abs(el.y)>1000;
+  return false;
+}
+
+function isLargeCoordSfig(elements){
+  // If any coordinate is > 1000, it's likely a real-coordinate sfig
+  for(const el of elements){
+    if(el.type==='line'){if(Math.abs(el.x1)>1000||Math.abs(el.y1)>1000)return true;}
+    else if(el.type==='polyline'){for(const p of el.pts)if(Math.abs(p.x)>1000||Math.abs(p.y)>1000)return true;}
+    else if(el.type==='text'||el.type==='label'){if(Math.abs(el.x)>1000||Math.abs(el.y)>1000)return true;}
+  }
+  return false;
+}
+
+function parseElem(type,raw){
+  const a=spl(raw);
+  switch(type){
+    case 'line_feature':if(a.length>=8)return{type:'line',col:nv(a[1]),w:nv(a[3]),x1:nv(a[4]),y1:nv(a[5]),x2:nv(a[6]),y2:nv(a[7])};break;
+    case 'polyline_feature':{if(a.length>=7){const xs=pArr(a[5]),ys=pArr(a[6]);if(xs.length>=2)return{type:'polyline',col:nv(a[1]),w:nv(a[3]),pts:xs.map((x,i)=>({x,y:ys[i]||0}))}}break;}
+    case 'text_string_feature':if(a.length>=12)return{type:'text',col:nv(a[1]),txt:gStr(a[3]),x:nv(a[4]),y:nv(a[5]),h:nv(a[6]),tw:nv(a[7]),ang:nv(a[9]),ha:nv(a[11])||1,va:nv(a[12])||1};break;
+    case 'label_feature':if(a.length>=18){const xs=pArr(a[5]),ys=pArr(a[6]);return{type:'label',col:nv(a[1]),lpts:xs.map((x,i)=>({x,y:ys[i]||0})),txt:gStr(a[12]),x:nv(a[13]),y:nv(a[14]),h:nv(a[15]),ang:nv(a[17])};}break;
+  }
+  return null;
+}
+
+function addElem(result,el,ox,oy,sx,sy){
+  const tx=x=>x*sx+ox,ty=y=>y*sy+oy;
+  switch(el.type){
+    case 'line':result.lines.push({col:el.col,w:el.w,x1:tx(el.x1),y1:ty(el.y1),x2:tx(el.x2),y2:ty(el.y2)});break;
+    case 'polyline':result.polylines.push({col:el.col,w:el.w,pts:el.pts.map(p=>({x:tx(p.x),y:ty(p.y)}))});break;
+    case 'text':result.texts.push({col:el.col,txt:el.txt,x:tx(el.x),y:ty(el.y),h:el.h*Math.abs(sy),tw:el.tw*Math.abs(sx),ang:el.ang,ha:el.ha,va:el.va||1});break;
+    case 'label':result.labels.push({col:el.col,lpts:el.lpts.map(p=>({x:tx(p.x),y:ty(p.y)})),txt:el.txt,x:tx(el.x),y:ty(el.y),h:el.h*Math.abs(sy),ang:el.ang});break;
+  }
+}
+
+function gStr(s){if(!s)return'';s=s.trim();s=s.replace(/^\\'/g,'').replace(/\\'$/g,'');s=s.replace(/^'/g,'').replace(/'$/g,'');return s;}
+function nv(s){if(!s)return 0;return parseFloat(s.trim().replace(/^'|'$/g,''))||0;}
+function spl(s){const r=[];let d=0,cur='',inQ=false;for(let i=0;i<s.length;i++){const ch=s[i];if(ch==="'"&&(i===0||s[i-1]!=='\\')){inQ=!inQ;cur+=ch;}else if(ch==='('&&!inQ){d++;cur+=ch;}else if(ch===')'&&!inQ){d--;cur+=ch;}else if(ch===','&&d===0&&!inQ){r.push(cur.trim());cur='';}else{cur+=ch;}}if(cur.trim())r.push(cur.trim());return r;}
+function pArr(s){if(!s)return[];s=s.trim().replace(/^'?\(/,'').replace(/\)'?$/,'');return s.split(',').map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));}
+
+function getCol(colId){
+  // 背景色に応じて線色を切り替え
+  return darkBg?'#ffffff':'#000000';
+}
+function isWhitish(col){if(['#fff','#ffffff','#999','#999999'].includes(col))return true;const m=col.match(/rgb\((\d+),(\d+),(\d+)\)/);return m&&+m[1]>200&&+m[2]>200&&+m[3]>200;}
+function getW(wId){
+  if(!D)return 0.13;
+  // widthList[wId-1]で定義順インデックス参照、なければSXF標準線幅を使用
+  if(wId>=1&&D.widthList&&D.widthList[wId-1]) return D.widthList[wId-1];
+  return SXF_STD_WIDTHS[wId]||0.13;
+}
+
+function render(){
+  if(!D)return;
+  const dpr=window.devicePixelRatio||1,w=wrap.clientWidth,h=wrap.clientHeight;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';
+  c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#888';c.fillRect(0,0,w,h);
+  if(D&&D.sheetW>0&&D.sheetH>0){c.save();c.translate(V.ox,V.oy);c.scale(V.s,-V.s);c.fillStyle=darkBg?'#000':'#fff';c.fillRect(0,0,D.sheetW,D.sheetH);c.restore();}
+  c.save();c.translate(V.ox,V.oy);c.scale(V.s,-V.s);
+
+  for(const l of D.lines){c.beginPath();c.strokeStyle=getCol(l.col);c.lineWidth=Math.max(0.5/V.s,getW(l.w));c.moveTo(l.x1,l.y1);c.lineTo(l.x2,l.y2);c.stroke();}
+  // polyline_featureは描画しない（CADソフト自動生成のシンボル等を除外）
+  for(const lb of D.labels){if(lb.lpts.length>=2){c.beginPath();c.strokeStyle=getCol(lb.col);c.lineWidth=.5/V.s;c.moveTo(lb.lpts[0].x,lb.lpts[0].y);for(let i=1;i<lb.lpts.length;i++)c.lineTo(lb.lpts[i].x,lb.lpts[i].y);c.stroke();}}
+  if(showTxt){for(const t of D.texts)dtxt(t.txt,t.x,t.y,t.h,t.tw,t.ang,t.col,t.ha,t.va||1);for(const lb of D.labels)dtxt(lb.txt,lb.x,lb.y,lb.h,lb.tw,lb.ang,lb.col,1,1);}
+  c.restore();
+  document.getElementById('zoomDisplay').value=Math.round(V.s/baseScale*100)+'%';
+}
+
+function dtxt(txt,x,y,h,tw,ang,col,ha,va){
+  if(!txt||!txt.trim())return;
+  const fs=Math.abs(h);if(fs<0.1)return;
+  c.save();c.translate(x,y);c.scale(1,-1);
+  if(ang&&Math.abs(ang)>.01)c.rotate((-ang*Math.PI)/180);
+  c.fillStyle=getCol(col||1);
+  c.font=`${fs}px sans-serif`;
+  c.textBaseline=va===2?'middle':va===3?'top':'alphabetic';
+  c.textAlign=ha===2?'center':ha===3?'right':'left';
+  c.fillText(txt,0,0);c.restore();
+}
+
+function bnd(){
+  if(!D)return null;let x0=1/0,y0=1/0,x1=-1/0,y1=-1/0;
+  for(const l of D.lines){x0=Math.min(x0,l.x1,l.x2);y0=Math.min(y0,l.y1,l.y2);x1=Math.max(x1,l.x1,l.x2);y1=Math.max(y1,l.y1,l.y2);}
+  for(const pl of D.polylines)for(const p of pl.pts){x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x);y1=Math.max(y1,p.y);}
+  for(const t of D.texts){x0=Math.min(x0,t.x);y0=Math.min(y0,t.y);x1=Math.max(x1,t.x);y1=Math.max(y1,t.y);}
+  for(const lb of D.labels){x0=Math.min(x0,lb.x);y0=Math.min(y0,lb.y);x1=Math.max(x1,lb.x);y1=Math.max(y1,lb.y);for(const p of lb.lpts){x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x);y1=Math.max(y1,p.y);}}
+  return x0===1/0?null:{x0,y0,x1,y1};
+}
+
+function fitToView(){
+  let fx0,fy0,fx1,fy1;
+  if(D.sheetW>0&&D.sheetH>0){fx0=0;fy0=0;fx1=D.sheetW;fy1=D.sheetH;}
+  else{const b=bnd();if(!b)return;fx0=b.x0;fy0=b.y0;fx1=b.x1;fy1=b.y1;}
+  const w=wrap.clientWidth,h=wrap.clientHeight,dw=fx1-fx0,dh=fy1-fy0;
+  if(!dw||!dh)return;const pad=10;
+  V.s=Math.min((w-pad*2)/dw,(h-pad*2)/dh);
+  baseScale=V.s;
+  V.ox=w/2-(fx0+fx1)/2*V.s;V.oy=h/2+(fy0+fy1)/2*V.s;render();
+}
+
+function zoomAt(cx,cy,f){const ns=V.s*f;if(ns<.00001||ns>5000)return;V.ox=cx-(cx-V.ox)*f;V.oy=cy-(cy-V.oy)*f;V.s=ns;render();}
+function setZoomFromInput(val){
+  const pct=parseFloat(val.replace('%',''));
+  if(isNaN(pct)||pct<=0)return;
+  const newS=baseScale*pct/100;
+  const cx=wrap.clientWidth/2,cy=wrap.clientHeight/2;
+  V.ox=cx-(cx-V.ox)*(newS/V.s);V.oy=cy-(cy-V.oy)*(newS/V.s);V.s=newS;render();
+}
+function zoomIn(){zoomAt(wrap.clientWidth/2,wrap.clientHeight/2,1.3);}
+function zoomOut(){zoomAt(wrap.clientWidth/2,wrap.clientHeight/2,1/1.3);}
+function toggleBg(){
+  darkBg=!darkBg;
+  document.getElementById('toggleBg').classList.toggle('active',darkBg);
+  render();
+}
+
+function toggleText(){showTxt=!showTxt;document.getElementById('toggleText').classList.toggle('active',showTxt);render();}
+function toggleInvert(){invertWhite=!invertWhite;document.getElementById('toggleInvert').classList.toggle('active',invertWhite);render();}
+
+function onFile(e){const f=e.target.files[0];if(f)loadFile(f);}
+function loadFile(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{const bytes=new Uint8Array(e.target.result);let text;
+      try{text=new TextDecoder('shift_jis').decode(bytes);}catch{text=new TextDecoder('utf-8').decode(bytes);}
+      D=parse(text);
+      document.getElementById('fileName').textContent=file.name;
+      document.getElementById('infoDisplay').textContent=`線: ${D.lines.length}  PL: ${D.polylines.length}  文字: ${D.texts.length+D.labels.length}`;
+      document.getElementById('dropOverlay').classList.add('hidden');
+      showTxt=true;document.getElementById('toggleText').classList.add('active');
+      fitToView();
+    }catch(err){showErr('読み込み失敗: '+err.message);}
+  };reader.readAsArrayBuffer(file);
+}
+function showErr(msg){const el=document.getElementById('errToast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4000);}
+
+wrap.addEventListener('mousedown',e=>{dragging=true;dragX=e.clientX-V.ox;dragY=e.clientY-V.oy;});
+window.addEventListener('mousemove',e=>{if(dragging){V.ox=e.clientX-dragX;V.oy=e.clientY-dragY;render();}if(D){const r=wrap.getBoundingClientRect();document.getElementById('coordDisp').textContent=`X: ${((e.clientX-r.left-V.ox)/V.s).toFixed(1)}  Y: ${(-(e.clientY-r.top-V.oy)/V.s).toFixed(1)}`;}});
+window.addEventListener('mouseup',()=>dragging=false);
+wrap.addEventListener('wheel',e=>{e.preventDefault();const r=wrap.getBoundingClientRect();zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.15:1/1.15);},{passive:false});
+let lastDist=0;
+wrap.addEventListener('touchstart',e=>{if(e.touches.length===1){dragging=true;dragX=e.touches[0].clientX-V.ox;dragY=e.touches[0].clientY-V.oy;}else if(e.touches.length===2){dragging=false;const dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY;lastDist=Math.sqrt(dx*dx+dy*dy);}},{passive:true});
+wrap.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1&&dragging){V.ox=e.touches[0].clientX-dragX;V.oy=e.touches[0].clientY-dragY;render();}else if(e.touches.length===2){const dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY,dist=Math.sqrt(dx*dx+dy*dy),r=wrap.getBoundingClientRect(),cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;if(lastDist>0)zoomAt(cx,cy,dist/lastDist);lastDist=dist;}},{passive:false});
+wrap.addEventListener('touchend',()=>{dragging=false;lastDist=0;});
+wrap.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropOverlay').classList.remove('hidden');document.getElementById('dropOverlay').classList.add('drag-over');});
+wrap.addEventListener('dragleave',()=>{document.getElementById('dropOverlay').classList.remove('drag-over');if(D)document.getElementById('dropOverlay').classList.add('hidden');});
+wrap.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropOverlay').classList.remove('drag-over');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+window.addEventListener('resize',()=>{if(D)render();});
+</script>
+</body>
+</html>
