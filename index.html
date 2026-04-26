@@ -212,10 +212,11 @@
   .tool-card:nth-child(3) { animation-delay: 0.15s; }
   .tool-card:nth-child(4) { animation-delay: 0.2s; }
   .tool-card:nth-child(5) { animation-delay: 0.25s; }
+  .tool-card:nth-child(6) { animation-delay: 0.3s; }
 
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 </style>
 </head>
@@ -228,7 +229,7 @@
     <div class="header-logo">🧰</div>
     <h1>arisa-tools</h1>
     <div class="subtitle">自作ツール一覧</div>
-    <div class="count">5 tools</div>
+    <div class="count">6 tools</div>
   </div>
 
   <!-- 汎用・情報処理系 -->
@@ -246,6 +247,20 @@
         <span class="tag tag-general">汎用</span>
       </div>
     </a>
+
+    <a class="tool-card" href="005-unit-converter.html">
+      <div class="tool-top">
+        <span class="tool-number">No.005</span>
+        <span class="tool-version">v1.0</span>
+      </div>
+      <div class="tool-name">単位変換ツール</div>
+      <div class="tool-desc">長さ・角度・面積をタブ切り替えで変換（尺貫法・度分秒対応）</div>
+      <div class="tool-tags">
+        <span class="tag tag-general">汎用</span>
+        <span class="tag tag-survey">測量</span>
+      </div>
+    </a>
+
   </div>
 
   <!-- 測量・建設業務系 -->
@@ -287,9 +302,21 @@
         <span class="tag tag-survey">測量</span>
       </div>
     </a>
+
+    <a class="tool-card" href="006-area-calculator.html">
+      <div class="tool-top">
+        <span class="tool-number">No.006</span>
+        <span class="tool-version">v1.0</span>
+      </div>
+      <div class="tool-name">座標面積計算ツール</div>
+      <div class="tool-desc">複数点の座標（X,Y）からガウスの面積公式で面積を計算する（㎡・坪・ha・a）</div>
+      <div class="tool-tags">
+        <span class="tag tag-survey">測量</span>
+      </div>
+    </a>
+
   </div>
 
-  <!-- Aiaこんぶ運営系（将来用） -->
   <!--
   <div class="category">
     <div class="category-title">Aiaこんぶ運営系</div>
@@ -297,24 +324,8 @@
   </div>
   -->
 
-  <!-- 汎用・情報処理系 追加分 -->
-
-    <a class="tool-card" href="005-unit-converter.html">
-      <div class="tool-top">
-        <span class="tool-number">No.005</span>
-        <span class="tool-version">v1.0</span>
-      </div>
-      <div class="tool-name">単位変換ツール</div>
-      <div class="tool-desc">長さ・角度・面積をタブ切り替えで変換（尺貫法・度分秒対応）</div>
-      <div class="tool-tags">
-        <span class="tag tag-general">汎用</span>
-        <span class="tag tag-survey">測量</span>
-      </div>
-    </a>
-
   <div class="footer">Powered by Aiaこんぶ ツール部</div>
 
 </div>
-
 </body>
 </html>
