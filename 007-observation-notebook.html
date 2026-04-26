@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.007 観測手簿補完ツール v1.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4a7cff;
+    --accent2: #00c9a7;
+    --warn: #ff8c42;
+    --text: #e2e6f0;
+    --text-dim: #8891b0;
+    --text-bright: #ffffff;
+    --red: #ff5c6a;
+    --green: #00c9a7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 0.02em;
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* 設定行 */
+  .settings-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field-group label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .field-group input, .field-group select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text-bright);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .field-group input:focus, .field-group select:focus {
+    border-color: var(--accent);
+  }
+
+  /* 視準点テーブル */
+  .point-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .point-table th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .point-table td {
+    padding: 6px 4px;
+    vertical-align: middle;
+  }
+
+  .point-table td input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-bright);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 6px 8px;
+    width: 100%;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .point-table td input:focus {
+    border-color: var(--accent);
+  }
+
+  .point-table td input.deg { width: 52px; }
+  .point-table td input.min { width: 40px; }
+  .point-table td input.sec { width: 52px; }
+  .point-table td input.dist { width: 80px; }
+  .point-table td input.name { width: 80px; }
+
+  .dms-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .dms-sep {
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0 1px;
+  }
+
+  .btn-del {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px 9px;
+    transition: all 0.15s;
+  }
+
+  .btn-del:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    margin-top: 10px;
+    padding: 9px 16px;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-add:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* アクションボタン */
+  .action-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-main {
+    flex: 1;
+    min-width: 180px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 20px;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn-main:hover {
+    background: #3a6ce0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(74,124,255,0.3);
+  }
+
+  .btn-main:active { transform: translateY(0); }
+
+  .btn-clear {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    padding: 14px 20px;
+    transition: all 0.2s;
+  }
+
+  .btn-clear:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  /* 結果テーブル */
+  .result-area { display: none; }
+  .result-area.show { display: block; }
+
+  .result-table-wrap {
+    overflow-x: auto;
+  }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    min-width: 680px;
+  }
+
+  .result-table th {
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+
+  .result-table td {
+    border: 1px solid var(--border);
+    padding: 9px 12px;
+    text-align: center;
+    color: var(--text-bright);
+  }
+
+  .result-table tr.row-sei td { background: rgba(74,124,255,0.07); }
+  .result-table tr.row-han td { background: rgba(0,201,167,0.07); }
+
+  .result-table .label-sei {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .result-table .label-han {
+    background: var(--accent2);
+    color: #0f1117;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .result-table tr.divider td {
+    background: var(--surface2);
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 6px 12px;
+    text-align: left;
+  }
+
+  .noise-badge {
+    font-size: 10px;
+    color: var(--warn);
+    margin-left: 4px;
+  }
+
+  /* コピーボタン */
+  .copy-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn-copy {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    padding: 9px 16px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-copy:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  .btn-copy.copied {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* 誤差ログ */
+  .noise-log {
+    margin-top: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+
+  .noise-log-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--warn);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* エラー */
+  .error-msg {
+    background: rgba(255,92,106,0.1);
+    border: 1px solid rgba(255,92,106,0.3);
+    border-radius: 8px;
+    color: var(--red);
+    font-size: 13px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  /* レスポンシブ */
+  @media (max-width: 600px) {
+    .point-table td input.deg { width: 44px; }
+    .point-table td input.min { width: 36px; }
+    .point-table td input.sec { width: 44px; }
+    .point-table td input.dist { width: 70px; }
+    .point-table td input.name { width: 64px; }
+    .dms-sep { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">No.007</div>
+  <h1>観測手簿補完ツール</h1>
+  <p>正方向の観測値を入力 → 反方向を自動生成して1対回完成　<span style="color:var(--accent2);font-size:12px;font-weight:700;">v1.0</span></p>
+</header>
+
+<!-- 設定 -->
+<div class="card">
+  <div class="card-title">設定</div>
+  <div class="settings-row">
+    <div class="field-group">
+      <label>誤差範囲（秒）</label>
+      <select id="noiseRange" style="width:120px;">
+        <option value="1">± 1″</option>
+        <option value="2">± 2″</option>
+        <option value="3" selected>± 3″</option>
+        <option value="5">± 5″</option>
+        <option value="10">± 10″</option>
+        <option value="0">誤差なし</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>観測者名（任意）</label>
+      <input type="text" id="observerName" placeholder="例：朝水" style="width:140px;">
+    </div>
+    <div class="field-group">
+      <label>観測日（任意）</label>
+      <input type="date" id="obsDate" style="width:150px;">
+    </div>
+  </div>
+</div>
+
+<!-- 入力 -->
+<div class="card">
+  <div class="card-title">正方向 観測値入力</div>
+  <div style="overflow-x:auto;">
+    <table class="point-table">
+      <thead>
+        <tr>
+          <th>視準点名</th>
+          <th colspan="3">水平角（°′″）</th>
+          <th colspan="3">鉛直角（°′″）</th>
+          <th>距離①(m)</th>
+          <th>距離②(m)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="inputBody"></tbody>
+    </table>
+  </div>
+  <button class="btn-add" onclick="addRow()">＋ 視準点を追加</button>
+</div>
+
+<div class="error-msg" id="errorMsg"></div>
+
+<!-- アクション -->
+<div class="action-row">
+  <button class="btn-main" onclick="generate()">🔄 1対回を生成</button>
+  <button class="btn-clear" onclick="clearAll()">リセット</button>
+</div>
+
+<!-- 結果 -->
+<div class="result-area" id="resultArea">
+  <div class="card">
+    <div class="card-title">1対回 観測手簿</div>
+    <div class="result-table-wrap">
+      <table class="result-table" id="resultTable"></table>
+    </div>
+    <div class="copy-row">
+      <button class="btn-copy" id="btnCopyTable" onclick="copyTable()">📋 テキストコピー</button>
+      <button class="btn-copy" id="btnRegenerate" onclick="generate()">🎲 誤差を振り直す</button>
+    </div>
+    <div class="noise-log" id="noiseLog"></div>
+  </div>
+</div>
+
+<script>
+  let rowCount = 0;
+
+  function addRow() {
+    rowCount++;
+    const tbody = document.getElementById('inputBody');
+    const tr = document.createElement('tr');
+    tr.id = 'row_' + rowCount;
+    tr.innerHTML = `
+      <td><input type="text" class="name" placeholder="点${rowCount}" id="name_${rowCount}"></td>
+      <td>
+        <div class="dms-group">
+          <input type="number" class="deg" min="0" max="359" placeholder="0" id="h_d_${rowCount}">
+          <span class="dms-sep">°</span>
+          <input type="number" class="min" min="0" max="59" placeholder="00" id="h_m_${rowCount}">
+          <span class="dms-sep">′</span>
+          <input type="number" class="sec" min="0" max="59.9" step="0.1" placeholder="00.0" id="h_s_${rowCount}">
+          <span class="dms-sep">″</span>
+        </div>
+      </td>
+      <td></td><td></td>
+      <td>
+        <div class="dms-group">
+          <input type="number" class="deg" min="0" max="359" placeholder="90" id="v_d_${rowCount}">
+          <span class="dms-sep">°</span>
+          <input type="number" class="min" min="0" max="59" placeholder="00" id="v_m_${rowCount}">
+          <span class="dms-sep">′</span>
+          <input type="number" class="sec" min="0" max="59.9" step="0.1" placeholder="00.0" id="v_s_${rowCount}">
+          <span class="dms-sep">″</span>
+        </div>
+      </td>
+      <td></td><td></td>
+      <td><input type="number" class="dist" min="0" step="0.001" placeholder="0.000" id="dist1_${rowCount}"></td>
+      <td><input type="number" class="dist" min="0" step="0.001" placeholder="0.000" id="dist2_${rowCount}"></td>
+      <td><button class="btn-del" onclick="delRow(${rowCount})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function delRow(id) {
+    const row = document.getElementById('row_' + id);
+    if (row) row.remove();
+  }
+
+  function clearAll() {
+    document.getElementById('inputBody').innerHTML = '';
+    rowCount = 0;
+    document.getElementById('resultArea').classList.remove('show');
+    document.getElementById('errorMsg').classList.remove('show');
+    addRow();
+    addRow();
+    addRow();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('show');
+  }
+
+  // DMS → 秒（総秒数）
+  function dmsToSec(d, m, s) {
+    return d * 3600 + m * 60 + s;
+  }
+
+  // 秒 → DMS
+  function secToDms(totalSec) {
+    // 360°以上の正規化
+    let t = ((totalSec % 1296000) + 1296000) % 1296000;
+    const d = Math.floor(t / 3600);
+    t -= d * 3600;
+    const m = Math.floor(t / 60);
+    const s = Math.round((t - m * 60) * 10) / 10;
+    return { d, m, s };
+  }
+
+  function fmtDms(d, m, s) {
+    const ss = String(s.toFixed(1)).padStart(4, '0');
+    const mm = String(m).padStart(2, '0');
+    // 度はゼロ埋めなし
+    return `${d}°${mm}′${ss}″`;
+  }
+
+  // ランダム誤差（±range秒、整数秒単位）
+  function randNoise(range) {
+    if (range === 0) return 0;
+    // -range〜+range の整数
+    return Math.floor(Math.random() * (2 * range + 1)) - range;
+  }
+
+  function generate() {
+    hideError();
+    const noiseRange = parseInt(document.getElementById('noiseRange').value);
+    const observer = document.getElementById('observerName').value;
+    const obsDate = document.getElementById('obsDate').value;
+
+    // 行を収集
+    const rows = document.getElementById('inputBody').querySelectorAll('tr');
+    if (rows.length === 0) {
+      showError('視準点を1つ以上入力してください。');
+      return;
+    }
+
+    const points = [];
+    for (const tr of rows) {
+      const id = tr.id.replace('row_', '');
+      const name = document.getElementById('name_' + id)?.value || ('点' + id);
+
+      const hd = parseFloat(document.getElementById('h_d_' + id)?.value) || 0;
+      const hm = parseFloat(document.getElementById('h_m_' + id)?.value) || 0;
+      const hs = parseFloat(document.getElementById('h_s_' + id)?.value) || 0;
+
+      const vd = parseFloat(document.getElementById('v_d_' + id)?.value) || 90;
+      const vm = parseFloat(document.getElementById('v_m_' + id)?.value) || 0;
+      const vs = parseFloat(document.getElementById('v_s_' + id)?.value) || 0;
+
+      const dist1 = parseFloat(document.getElementById('dist1_' + id)?.value);
+      const dist2 = parseFloat(document.getElementById('dist2_' + id)?.value);
+      // 入力された距離の平均（片方だけでもOK）
+      let distSei = null;
+      if (!isNaN(dist1) && !isNaN(dist2)) {
+        distSei = (dist1 + dist2) / 2;
+      } else if (!isNaN(dist1)) {
+        distSei = dist1;
+      } else if (!isNaN(dist2)) {
+        distSei = dist2;
+      }
+
+      // 鉛直角が0の場合は90°とみなす（天頂距離）
+      const vdFinal = (vd === 0 && vm === 0 && vs === 0) ? 90 : vd;
+
+      points.push({ name, hd, hm, hs, vd: vdFinal, vm, vs, dist: distSei, dist1: isNaN(dist1)?null:dist1, dist2: isNaN(dist2)?null:dist2 });
+    }
+
+    // 結果生成
+    const noiseLog = [];
+    const resultRows = [];
+
+    // ヘッダ行
+    const hasDate = obsDate || observer;
+
+    for (const pt of points) {
+      // 正方向
+      const hSeiSec = dmsToSec(pt.hd, pt.hm, pt.hs);
+      const vSeiSec = dmsToSec(pt.vd, pt.vm, pt.vs);
+
+      // 反方向計算
+      // 水平角: 正+180°（648000秒）
+      const hHanBase = hSeiSec + 648000;
+      // 鉛直角: 360°-正（1296000秒）
+      const vHanBase = 1296000 - vSeiSec;
+
+      // ランダム誤差（反方向に付加）
+      const hNoise = randNoise(noiseRange);
+      const vNoise = randNoise(noiseRange);
+
+      const hHanSec = hHanBase + hNoise;
+      const vHanSec = vHanBase + vNoise;
+
+      // 距離：反方向2回をランダム誤差で生成
+      let distSeiStr = '―', distHan1Str = '―', distHan2Str = '―';
+      let dNoise1 = 0, dNoise2 = 0;
+      if (pt.dist !== null) {
+        const seiAvg = pt.dist;
+        dNoise1 = noiseRange > 0 ? (Math.random() * 0.004 - 0.002) : 0;
+        dNoise2 = noiseRange > 0 ? (Math.random() * 0.004 - 0.002) : 0;
+        const han1 = Math.round((seiAvg + dNoise1) * 1000) / 1000;
+        const han2 = Math.round((seiAvg + dNoise2) * 1000) / 1000;
+        // 正方向の表示（入力値そのまま or 平均）
+        if (pt.dist1 !== null && pt.dist2 !== null) {
+          distSeiStr = `${pt.dist1.toFixed(3)} / ${pt.dist2.toFixed(3)}`;
+        } else if (pt.dist1 !== null) {
+          distSeiStr = pt.dist1.toFixed(3);
+        } else if (pt.dist2 !== null) {
+          distSeiStr = pt.dist2.toFixed(3);
+        }
+        distHan1Str = han1.toFixed(3);
+        distHan2Str = han2.toFixed(3);
+      }
+
+      const hSei = secToDms(hSeiSec);
+      const vSei = secToDms(vSeiSec);
+      const hHan = secToDms(hHanSec);
+      const vHan = secToDms(vHanSec);
+
+      noiseLog.push({
+        name: pt.name,
+        hNoise, vNoise,
+        dNoise1: pt.dist !== null ? Math.round(dNoise1 * 1000) : null,
+        dNoise2: pt.dist !== null ? Math.round(dNoise2 * 1000) : null
+      });
+
+      resultRows.push({
+        name: pt.name,
+        sei: {
+          h: fmtDms(hSei.d, hSei.m, hSei.s),
+          v: fmtDms(vSei.d, vSei.m, vSei.s),
+          dist: distSeiStr
+        },
+        han: {
+          h: fmtDms(hHan.d, hHan.m, hHan.s),
+          v: fmtDms(vHan.d, vHan.m, vHan.s),
+          dist1: distHan1Str,
+          dist2: distHan2Str
+        },
+        hNoise, vNoise
+      });
+    }
+
+    // テーブル描画
+    const tbl = document.getElementById('resultTable');
+    let html = '';
+
+    // ヘッダ
+    html += `<thead>
+      <tr>
+        <th>視準点</th>
+        <th>正反</th>
+        <th>水平角</th>
+        <th>鉛直角</th>
+        <th>距離①(m)</th>
+        <th>距離②(m)</th>
+      </tr>
+    </thead><tbody>`;
+
+    if (hasDate) {
+      html += `<tr class="divider"><td colspan="6">観測日：${obsDate || '―'}　観測者：${observer || '―'}</td></tr>`;
+    }
+
+    for (const r of resultRows) {
+      html += `
+        <tr class="row-sei">
+          <td rowspan="2"><strong>${r.name}</strong></td>
+          <td><span class="label-sei">正</span></td>
+          <td>${r.sei.h}</td>
+          <td>${r.sei.v}</td>
+          <td colspan="2" style="text-align:center;">${r.sei.dist}</td>
+        </tr>
+        <tr class="row-han">
+          <td><span class="label-han">反</span></td>
+          <td>${r.han.h}${r.hNoise !== 0 ? `<span class="noise-badge">(±${Math.abs(r.hNoise)}″)</span>` : ''}</td>
+          <td>${r.han.v}${r.vNoise !== 0 ? `<span class="noise-badge">(±${Math.abs(r.vNoise)}″)</span>` : ''}</td>
+          <td>${r.han.dist1}</td>
+          <td>${r.han.dist2}</td>
+        </tr>
+      `;
+    }
+
+    html += '</tbody>';
+    tbl.innerHTML = html;
+
+    // 誤差ログ
+    const logEl = document.getElementById('noiseLog');
+    if (noiseRange === 0) {
+      logEl.innerHTML = `<div class="noise-log-title">付加誤差ログ</div>誤差なしモード（理論値のみ）`;
+    } else {
+      let logHtml = `<div class="noise-log-title">付加誤差ログ（反方向）</div>`;
+      for (const n of noiseLog) {
+        const hSign = n.hNoise >= 0 ? '+' : '';
+        const vSign = n.vNoise >= 0 ? '+' : '';
+        let dPart = '';
+        if (n.dNoise1 !== null) {
+          dPart = `　距離①：${n.dNoise1 >= 0 ? '+' : ''}${n.dNoise1}mm　距離②：${n.dNoise2 >= 0 ? '+' : ''}${n.dNoise2}mm`;
+        }
+        logHtml += `${n.name}　水平：${hSign}${n.hNoise}″　鉛直：${vSign}${n.vNoise}″${dPart}\n`;
+      }
+      logEl.innerHTML = logHtml;
+    }
+
+    document.getElementById('resultArea').classList.add('show');
+    document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyTable() {
+    const rows = document.querySelectorAll('#resultTable tr');
+    let text = '';
+    const obsDate = document.getElementById('obsDate').value;
+    const observer = document.getElementById('observerName').value;
+    if (obsDate || observer) {
+      text += `観測日：${obsDate || '―'}　観測者：${observer || '―'}\n`;
+    }
+    text += '視準点\t正反\t水平角\t鉛直角\t距離①(m)\t距離②(m)\n';
+
+    document.querySelectorAll('#resultTable tbody tr').forEach(tr => {
+      if (tr.classList.contains('divider')) return;
+      const tds = tr.querySelectorAll('td');
+      const cells = [];
+      tds.forEach(td => {
+        // noise-badge除去
+        const clone = td.cloneNode(true);
+        clone.querySelectorAll('.noise-badge').forEach(el => el.remove());
+        cells.push(clone.textContent.trim());
+      });
+      // rowspanの点名処理
+      if (tr.classList.contains('row-sei')) {
+        text += cells.join('\t') + '\n';
+      } else {
+        text += '\t' + cells.join('\t') + '\n';
+      }
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btnCopyTable');
+      btn.textContent = '✅ コピー完了';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 テキストコピー';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // 初期表示：3行追加
+  addRow();
+  addRow();
+  addRow();
+</script>
+</body>
+</html>
