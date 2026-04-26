@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>単位変換ツール v1.0 | arisa-tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74,158,255,0.12);
+    --green: #34d399;
+    --green-glow: rgba(52,211,153,0.12);
+    --orange: #fb923c;
+    --orange-glow: rgba(251,146,60,0.12);
+    --text: #e8eaf0;
+    --text-dim: #8a8fa8;
+    --label: #6b7194;
+    --radius: 10px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .container { max-width: 520px; margin: 0 auto; }
+
+  /* ── ヘッダー ── */
+  .header { text-align:center; margin-bottom:24px; padding-top:12px; }
+  .header-icon { font-size:28px; margin-bottom:6px; }
+  .header h1 { font-size:20px; font-weight:900; }
+  .version {
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    color:var(--accent); background:var(--accent-glow);
+    padding:2px 10px; border-radius:20px; display:inline-block; margin-top:6px;
+  }
+
+  /* ── タブ ── */
+  .tabs {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:6px; margin-bottom:16px;
+  }
+
+  .tab {
+    font-family:'Noto Sans JP',sans-serif; font-size:13px; font-weight:700;
+    background:var(--surface); color:var(--text-dim);
+    border:1px solid var(--border); border-radius:8px;
+    padding:10px 0; cursor:pointer; transition:all 0.15s; text-align:center;
+  }
+
+  .tab:hover { color:var(--text); }
+  .tab.active { background:var(--accent-glow); color:var(--accent); border-color:var(--accent); }
+  .tab.active.green { background:var(--green-glow); color:var(--green); border-color:var(--green); }
+  .tab.active.orange { background:var(--orange-glow); color:var(--orange); border-color:var(--orange); }
+
+  /* ── パネル ── */
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* ── カード ── */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px 18px; margin-bottom:10px;
+  }
+
+  .card-title {
+    font-size:11px; font-weight:700; color:var(--label);
+    letter-spacing:0.06em; margin-bottom:12px;
+    display:flex; align-items:center; gap:6px;
+  }
+
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+  .dot.green { background:var(--green); }
+  .dot.orange { background:var(--orange); }
+
+  /* ── 入力行 ── */
+  .unit-row {
+    display:grid; grid-template-columns:80px 1fr;
+    align-items:center; gap:10px; margin-bottom:8px;
+  }
+
+  .unit-row:last-child { margin-bottom:0; }
+
+  .unit-label {
+    font-family:'JetBrains Mono',monospace; font-size:12px;
+    color:var(--text-dim); text-align:right; line-height:1.3;
+  }
+
+  .unit-input {
+    font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:500;
+    color:var(--text); background:var(--surface2);
+    border:1px solid var(--border); border-radius:6px;
+    padding:9px 12px; outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+    width:100%;
+  }
+
+  .unit-input:focus {
+    border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow);
+  }
+
+  .unit-input.green:focus {
+    border-color:var(--green); box-shadow:0 0 0 3px var(--green-glow);
+  }
+
+  .unit-input.orange:focus {
+    border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-glow);
+  }
+
+  .unit-input::placeholder { color:var(--label); font-size:12px; }
+
+  /* ── セクション区切り ── */
+  .section-label {
+    font-size:10px; color:var(--label); letter-spacing:0.08em;
+    margin:14px 0 8px; padding-left:2px;
+    text-transform:uppercase;
+  }
+
+  /* ── クリアボタン ── */
+  .btn-clear {
+    font-family:'Noto Sans JP',sans-serif; font-size:13px; font-weight:500;
+    background:var(--surface2); color:var(--text-dim);
+    border:1px solid var(--border); border-radius:8px;
+    padding:10px 0; cursor:pointer; width:100%; margin-top:6px;
+    transition:all 0.15s;
+  }
+
+  .btn-clear:hover { color:var(--text); border-color:var(--text-dim); }
+  .btn-clear:active { transform:scale(0.98); }
+
+  /* ── DMS ＋－ボタン ── */
+  .dms-wrap { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
+  .dms-cell { display:flex; flex-direction:column; gap:3px; }
+  .dms-btns { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+  .dms-btn {
+    font-size:14px; font-weight:700; background:var(--surface2);
+    color:var(--text-dim); border:1px solid var(--border);
+    border-radius:5px; padding:4px 0; cursor:pointer;
+    transition:all 0.12s; line-height:1;
+  }
+  .dms-btn:hover { color:var(--green); border-color:var(--green); }
+  .dms-btn:active { transform:scale(0.95); }
+
+  /* ── フッター ── */
+  .footer { text-align:center; padding:16px 0; font-size:11px; color:var(--label); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon">📏</div>
+    <h1>単位変換ツール</h1>
+    <span class="version">v1.0</span>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('length')">📐 長さ</button>
+    <button class="tab green" onclick="switchTab('angle')">🔄 角度</button>
+    <button class="tab orange" onclick="switchTab('area')">⬜ 面積</button>
+  </div>
+
+  <!-- 長さパネル -->
+  <div class="panel active" id="panel-length">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>メートル法</div>
+      <div class="unit-row">
+        <div class="unit-label">mm<br>ミリ</div>
+        <input class="unit-input" id="mm" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('mm')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">cm<br>センチ</div>
+        <input class="unit-input" id="cm" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('cm')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">m<br>メートル</div>
+        <input class="unit-input" id="m" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('m')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">km<br>キロ</div>
+        <input class="unit-input" id="km" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('km')">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>尺貫法</div>
+      <div class="unit-row">
+        <div class="unit-label">尺<br>shaku</div>
+        <input class="unit-input" id="shaku" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('shaku')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">間<br>ken</div>
+        <input class="unit-input" id="ken" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('ken')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">丈<br>jo</div>
+        <input class="unit-input" id="jo" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('jo')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">里<br>ri</div>
+        <input class="unit-input" id="ri" type="text" inputmode="decimal" placeholder="0" oninput="convertLength('ri')">
+      </div>
+    </div>
+    <button class="btn-clear" onclick="clearAll('length')">クリア</button>
+  </div>
+
+  <!-- 角度パネル -->
+  <div class="panel" id="panel-angle">
+    <div class="card">
+      <div class="card-title"><span class="dot green"></span>角度変換</div>
+
+      <div class="unit-row">
+        <div class="unit-label">度分秒<br>DMS</div>
+        <div class="dms-wrap">
+          <div class="dms-cell">
+            <input class="unit-input green" id="deg" type="text" inputmode="decimal" placeholder="度" oninput="convertAngle('dms')">
+            <div class="dms-btns">
+              <button class="dms-btn" onclick="stepDMS('deg',-1)">－</button>
+              <button class="dms-btn" onclick="stepDMS('deg',1)">＋</button>
+            </div>
+          </div>
+          <div class="dms-cell">
+            <input class="unit-input green" id="min" type="text" inputmode="decimal" placeholder="分" oninput="convertAngle('dms')">
+            <div class="dms-btns">
+              <button class="dms-btn" onclick="stepDMS('min',-1)">－</button>
+              <button class="dms-btn" onclick="stepDMS('min',1)">＋</button>
+            </div>
+          </div>
+          <div class="dms-cell">
+            <input class="unit-input green" id="sec" type="text" inputmode="decimal" placeholder="秒" oninput="convertAngle('dms')">
+            <div class="dms-btns">
+              <button class="dms-btn" onclick="stepDMS('sec',-1)">－</button>
+              <button class="dms-btn" onclick="stepDMS('sec',1)">＋</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="unit-row">
+        <div class="unit-label">10進度<br>decimal</div>
+        <input class="unit-input green" id="decimal_deg" type="text" inputmode="decimal" placeholder="0.000000°" oninput="convertAngle('decimal')">
+      </div>
+
+      <div class="unit-row">
+        <div class="unit-label">ラジアン<br>radian</div>
+        <input class="unit-input green" id="radian" type="text" inputmode="decimal" placeholder="0.000000 rad" oninput="convertAngle('radian')">
+      </div>
+
+      <div class="unit-row">
+        <div class="unit-label">円弧<br>gon/grad</div>
+        <input class="unit-input green" id="gon" type="text" inputmode="decimal" placeholder="0.000000 gon" oninput="convertAngle('gon')">
+      </div>
+    </div>
+    <button class="btn-clear" onclick="clearAll('angle')">クリア</button>
+  </div>
+
+  <!-- 面積パネル -->
+  <div class="panel" id="panel-area">
+    <div class="card">
+      <div class="card-title"><span class="dot orange"></span>SI単位</div>
+      <div class="unit-row">
+        <div class="unit-label">m²<br>平方m</div>
+        <input class="unit-input orange" id="sqm" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('sqm')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">a<br>アール</div>
+        <input class="unit-input orange" id="are" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('are')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">ha<br>ヘクタール</div>
+        <input class="unit-input orange" id="ha" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('ha')">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot orange"></span>尺貫法</div>
+      <div class="unit-row">
+        <div class="unit-label">坪<br>tsubo</div>
+        <input class="unit-input orange" id="tsubo" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('tsubo')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">畝<br>se</div>
+        <input class="unit-input orange" id="se" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('se')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">反<br>tan</div>
+        <input class="unit-input orange" id="tan" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('tan')">
+      </div>
+      <div class="unit-row">
+        <div class="unit-label">町<br>cho</div>
+        <input class="unit-input orange" id="cho" type="text" inputmode="decimal" placeholder="0" oninput="convertArea('cho')">
+      </div>
+    </div>
+    <button class="btn-clear" onclick="clearAll('area')">クリア</button>
+  </div>
+
+  <div class="footer">No.005 単位変換ツール — arisa-tools</div>
+</div>
+
+<script>
+// ── タブ切り替え ──
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  const idx = ['length','angle','area'].indexOf(tab);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+// ── 長さ変換 ──
+// 基準: mm
+const LENGTH = {
+  mm:    1,
+  cm:    10,
+  m:     1000,
+  km:    1000000,
+  shaku: 303.030303,    // 1尺 = 10/33 m = 1000/3.3 mm
+  ken:   1818.18182,    // 1間 = 6尺
+  jo:    3030.30303,    // 1丈 = 10尺
+  ri:    3927272.73,    // 1里 = 36町 = 3927.272...m
+};
+
+let lengthLock = false;
+
+function convertLength(from) {
+  if (lengthLock) return;
+  const val = parseFloat(document.getElementById(from).value);
+  if (isNaN(val)) { clearOutputs('length', from); return; }
+
+  const baseVal = val * LENGTH[from]; // mm換算
+
+  lengthLock = true;
+  for (const unit in LENGTH) {
+    if (unit === from) continue;
+    const el = document.getElementById(unit);
+    const converted = baseVal / LENGTH[unit];
+    el.value = formatNum(converted);
+  }
+  lengthLock = false;
+}
+
+function formatNum(n) {
+  if (Math.abs(n) >= 1e10) return n.toExponential(6);
+  if (Math.abs(n) < 0.001 && n !== 0) return n.toExponential(6);
+  // 有効桁数8桁
+  const s = parseFloat(n.toPrecision(10)).toString();
+  return s;
+}
+
+// ── 角度変換 ──
+let angleLock = false;
+
+function convertAngle(from) {
+  if (angleLock) return;
+
+  let decimalDeg;
+
+  if (from === 'dms') {
+    let d = parseFloat(document.getElementById('deg').value) || 0;
+    let m = parseFloat(document.getElementById('min').value) || 0;
+    let s = parseFloat(document.getElementById('sec').value) || 0;
+    if (isNaN(d) && isNaN(m) && isNaN(s)) { clearOutputs('angle','dms'); return; }
+    // 繰り上げ処理: 秒60以上→分へ、分60以上→度へ
+    if (s >= 60) { m += Math.floor(s/60); s = s % 60; document.getElementById('sec').value = parseFloat(s.toFixed(6)); }
+    if (m >= 60) { d += Math.floor(m/60); m = m % 60; document.getElementById('min').value = m; document.getElementById('deg').value = d; }
+    decimalDeg = d + m/60 + s/3600;
+  } else if (from === 'decimal') {
+    decimalDeg = parseFloat(document.getElementById('decimal_deg').value);
+    if (isNaN(decimalDeg)) { clearOutputs('angle','decimal'); return; }
+  } else if (from === 'radian') {
+    const rad = parseFloat(document.getElementById('radian').value);
+    if (isNaN(rad)) { clearOutputs('angle','radian'); return; }
+    decimalDeg = rad * 180 / Math.PI;
+  } else if (from === 'gon') {
+    const gon = parseFloat(document.getElementById('gon').value);
+    if (isNaN(gon)) { clearOutputs('angle','gon'); return; }
+    decimalDeg = gon * 0.9;
+  }
+
+  angleLock = true;
+
+  // DMS
+  if (from !== 'dms') {
+    const absD = Math.abs(decimalDeg);
+    const sign = decimalDeg < 0 ? -1 : 1;
+    const d = Math.floor(absD);
+    const mf = (absD - d) * 60;
+    const m = Math.floor(mf);
+    const s = (mf - m) * 60;
+    document.getElementById('deg').value = sign * d;
+    document.getElementById('min').value = m;
+    document.getElementById('sec').value = parseFloat(s.toFixed(6));
+  }
+
+  // 10進度
+  if (from !== 'decimal') {
+    document.getElementById('decimal_deg').value = parseFloat(decimalDeg.toFixed(10));
+  }
+
+  // ラジアン
+  if (from !== 'radian') {
+    document.getElementById('radian').value = parseFloat((decimalDeg * Math.PI / 180).toFixed(10));
+  }
+
+  // ゴン（グラード）
+  if (from !== 'gon') {
+    document.getElementById('gon').value = parseFloat((decimalDeg / 0.9).toFixed(10));
+  }
+
+  angleLock = false;
+}
+
+// ── 面積変換 ──
+// 基準: m²
+const AREA = {
+  sqm:   1,
+  are:   100,         // 1a = 100m²
+  ha:    10000,       // 1ha = 10000m²
+  tsubo: 400/121,     // 1坪 = 400/121 m² ≈ 3.30579m²
+  se:    4000/121,    // 1畝 = 10坪
+  tan:   40000/121,   // 1反 = 10畝 = 100坪
+  cho:   400000/121,  // 1町 = 10反
+};
+
+let areaLock = false;
+
+function convertArea(from) {
+  if (areaLock) return;
+  const val = parseFloat(document.getElementById(from).value);
+  if (isNaN(val)) { clearOutputs('area', from); return; }
+
+  const baseVal = val * AREA[from]; // m²換算
+
+  areaLock = true;
+  for (const unit in AREA) {
+    if (unit === from) continue;
+    const el = document.getElementById(unit);
+    const converted = baseVal / AREA[unit];
+    el.value = formatNum(converted);
+  }
+  areaLock = false;
+}
+
+// ── DMS ＋－ステップ ──
+function stepDMS(field, delta) {
+  const el = document.getElementById(field);
+  let val = parseFloat(el.value) || 0;
+  val += delta;
+  // 範囲制限と繰り上げ/繰り下げ
+  if (field === 'sec' || field === 'min') {
+    if (val >= 60) {
+      const carry = Math.floor(val / 60);
+      val = val % 60;
+      const upper = field === 'sec' ? 'min' : 'deg';
+      const upperEl = document.getElementById(upper);
+      upperEl.value = (parseFloat(upperEl.value) || 0) + carry;
+      if (upper === 'min') {
+        const minVal = parseFloat(upperEl.value);
+        if (minVal >= 60) {
+          document.getElementById('deg').value = (parseFloat(document.getElementById('deg').value)||0) + Math.floor(minVal/60);
+          upperEl.value = minVal % 60;
+        }
+      }
+    } else if (val < 0) {
+      const upper = field === 'sec' ? 'min' : 'deg';
+      const upperEl = document.getElementById(upper);
+      const upperVal = (parseFloat(upperEl.value) || 0) - 1;
+      upperEl.value = upperVal;
+      val = 59;
+    }
+  }
+  el.value = parseFloat(val.toFixed(6));
+  convertAngle('dms');
+}
+
+// ── クリア ──
+function clearAll(tab) {
+  if (tab === 'length') {
+    for (const unit in LENGTH) document.getElementById(unit).value = '';
+  } else if (tab === 'angle') {
+    ['deg','min','sec','decimal_deg','radian','gon'].forEach(id => document.getElementById(id).value = '');
+  } else if (tab === 'area') {
+    for (const unit in AREA) document.getElementById(unit).value = '';
+  }
+}
+
+function clearOutputs(tab, except) {
+  if (tab === 'length') {
+    for (const unit in LENGTH) {
+      if (unit !== except) document.getElementById(unit).value = '';
+    }
+  } else if (tab === 'angle') {
+    const ids = ['deg','min','sec','decimal_deg','radian','gon'];
+    if (except === 'dms') {
+      ['decimal_deg','radian','gon'].forEach(id => document.getElementById(id).value = '');
+    } else {
+      ids.filter(id => id !== except).forEach(id => document.getElementById(id).value = '');
+    }
+  } else if (tab === 'area') {
+    for (const unit in AREA) {
+      if (unit !== except) document.getElementById(unit).value = '';
+    }
+  }
+}
+</script>
+</body>
+</html>
