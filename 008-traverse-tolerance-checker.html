@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.008 基準点測量 許容値チェッカー</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #4a9eff;
+    --accent2: #7c5cfc;
+    --ok: #2ecc71;
+    --ng: #e74c3c;
+    --warn: #f39c12;
+    --text: #e8eaf0;
+    --text2: #8892b0;
+    --text3: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  /* ヘッダー */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--surface2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .desc {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* カード */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* 選択ボタングループ */
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .btn-group label {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .btn-group input[type="radio"] { display: none; }
+
+  .btn-group .btn-label {
+    display: block;
+    text-align: center;
+    padding: 9px 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+
+  .btn-group input[type="radio"]:checked + .btn-label {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(74, 158, 255, 0.1);
+  }
+
+  /* 入力フィールド */
+  .field-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field label {
+    font-size: 11px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  .field input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 10px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+  }
+
+  .field .unit {
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* チェックボタン */
+  .check-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 4px;
+  }
+
+  .check-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* 結果エリア */
+  .results { display: none; }
+  .results.show { display: block; }
+
+  .result-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .result-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .result-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 20px;
+  }
+
+  .result-badge.ok {
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--ok);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+  }
+
+  .result-badge.ng {
+    background: rgba(231, 76, 60, 0.15);
+    color: var(--ng);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+  }
+
+  .summary.limit-only {
+    background: rgba(74, 158, 255, 0.08);
+    border-color: rgba(74, 158, 255, 0.3);
+  }
+  .summary.limit-only .summary-text { color: var(--accent); }
+
+  .result-badge.limit-only {
+    background: rgba(74, 158, 255, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(74, 158, 255, 0.3);
+  }
+
+  .result-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+
+  .result-label { color: var(--text2); }
+  
+  .result-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .result-val.ok { color: var(--ok); }
+  .result-val.ng { color: var(--ng); }
+  .result-val.neutral { color: var(--text); }
+
+  .result-formula {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* サマリー */
+  .summary {
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 14px;
+    border: 1px solid;
+  }
+
+  .summary.all-ok {
+    background: rgba(46, 204, 113, 0.08);
+    border-color: rgba(46, 204, 113, 0.3);
+  }
+
+  .summary.has-ng {
+    background: rgba(231, 76, 60, 0.08);
+    border-color: rgba(231, 76, 60, 0.3);
+  }
+
+  .summary-icon { font-size: 28px; margin-bottom: 6px; }
+  
+  .summary-text {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .summary.all-ok .summary-text { color: var(--ok); }
+  .summary.has-ng .summary-text { color: var(--ng); }
+
+  .summary-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* 条文注記 */
+  .law-note {
+    background: rgba(74, 158, 255, 0.05);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 10px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-top: 14px;
+  }
+
+  .law-note strong { color: var(--accent); }
+
+  /* リセット */
+  .reset-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover { border-color: var(--text2); color: var(--text); }
+
+  /* セパレーター */
+  .sep {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 14px;
+    color: var(--text3);
+    font-size: 11px;
+  }
+  .sep::before, .sep::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge-row">
+    <span class="badge">No.008</span>
+    <span class="version">v1.2</span>
+  </div>
+  <div class="title">基準点測量 許容値チェッカー</div>
+  <div class="desc">令和7年改正 作業規程準則準拠｜トラバース閉合差・許容値を自動判定</div>
+</div>
+
+<!-- 設定カード -->
+<div class="card">
+  <div class="card-title">測量種別の選択</div>
+
+  <div class="sep">級</div>
+  <div class="btn-group">
+    <label><input type="radio" name="grade" value="1"> <span class="btn-label">1級</span></label>
+    <label><input type="radio" name="grade" value="2"> <span class="btn-label">2級</span></label>
+    <label><input type="radio" name="grade" value="3"> <span class="btn-label">3級</span></label>
+    <label><input type="radio" name="grade" value="4" checked> <span class="btn-label">4級</span></label>
+    <label><input type="radio" name="grade" value="street"> <span class="btn-label">街区</span></label>
+  </div>
+
+  <div class="sep">トラバース種別</div>
+  <div class="btn-group">
+    <label><input type="radio" name="traverse" value="combined" checked> <span class="btn-label">結合トラバース</span></label>
+    <label><input type="radio" name="traverse" value="closed"> <span class="btn-label">閉合トラバース</span></label>
+  </div>
+</div>
+
+<!-- 観測条件カード -->
+<div class="card">
+  <div class="card-title">観測条件の入力</div>
+  <div class="field-group">
+    <div class="field">
+      <label>辺数 n</label>
+      <input type="number" id="edgeCount" value="" placeholder="例: 5" min="1" step="1">
+      <span class="unit">辺</span>
+    </div>
+    <div class="field">
+      <label>総距離 S</label>
+      <input type="number" id="totalDist" value="" placeholder="例: 500" min="0" step="0.001">
+      <span class="unit">m</span>
+    </div>
+  </div>
+</div>
+
+<!-- 観測値カード -->
+<div class="card">
+  <div class="card-title">閉合差の入力</div>
+  <div class="field-group">
+    <div class="field">
+      <label>水平角観測 閉合差</label>
+      <input type="number" id="angleClose" value="" placeholder="例: 15" step="0.1">
+      <span class="unit">秒（″）</span>
+    </div>
+    <div class="field">
+      <label>方向角 閉合差</label>
+      <input type="number" id="bearingClose" value="" placeholder="例: 20" step="0.1">
+      <span class="unit">秒（″）</span>
+    </div>
+  </div>
+  <div class="field-group">
+    <div class="field">
+      <label>距離 閉合差</label>
+      <input type="number" id="distClose" value="" placeholder="例: 0.05" step="0.001">
+      <span class="unit">m</span>
+    </div>
+    <div class="field">
+      <label>座標 閉合差（√(ΔX²+ΔY²)）</label>
+      <input type="number" id="coordClose" value="" placeholder="例: 0.08" step="0.001">
+      <span class="unit">m</span>
+    </div>
+  </div>
+
+  <div class="law-note" style="margin-bottom:10px;">💡 辺数・総距離を入力すると許容値をすべて表示します。閉合差も入力するとOK/NG判定します。</div>
+  <button class="check-btn" onclick="checkTolerance()">✦ 許容値を計算・判定する</button>
+</div>
+
+<!-- 結果エリア -->
+<div class="results" id="results">
+  <div class="summary" id="summary">
+    <div class="summary-icon" id="summaryIcon"></div>
+    <div class="summary-text" id="summaryText"></div>
+    <div class="summary-sub" id="summarySub"></div>
+  </div>
+
+  <div id="resultItems"></div>
+
+  <div class="law-note" id="lawNote"></div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ リセットして再入力</button>
+</div>
+
+<script>
+// ====== 許容値テーブル ======
+// 作業規程の準則（令和7年3月31日改正版）基準点測量編
+// grade: 1,2,3,4,street
+// traverse: combined(結合), closed(閉合)
+
+const TOLERANCES = {
+  // 水平角観測閉合差: T1 = a * sqrt(n) 秒
+  // 方向角閉合差: T2 = b 秒（固定値、または計算）
+  // 距離閉合比: T3 = S/K （閉合比の逆数）
+  // 座標閉合差: T4 = c * sqrt(S) m または c * S mm
+
+  1: {
+    name: '1級基準点',
+    angleA: 10,       // 水平角観測閉合差 = 10√n 秒
+    bearingB: 20,     // 方向角閉合差 = 20秒（結合）
+    bearingB_closed: 20,
+    distRatio: 10000, // 距離閉合比 1/10000
+    coordC: 0.010,    // 座標閉合差 = 10√S mm → 0.010√S m
+    law: '準則第35条（1級基準点測量）',
+  },
+  2: {
+    name: '2級基準点',
+    angleA: 20,
+    bearingB: 30,
+    bearingB_closed: 30,
+    distRatio: 5000,
+    coordC: 0.020,
+    law: '準則第45条（2級基準点測量）',
+  },
+  3: {
+    name: '3級基準点',
+    angleA: 30,
+    bearingB: 60,
+    bearingB_closed: 60,
+    distRatio: 3000,
+    coordC: 0.030,
+    law: '準則第54条（3級基準点測量）',
+  },
+  4: {
+    name: '4級基準点',
+    angleA: 45,
+    bearingB: 90,
+    bearingB_closed: 90,
+    distRatio: 2000,
+    coordC: 0.050,
+    law: '準則第63条（4級基準点測量）',
+  },
+  street: {
+    name: '街区基準点',
+    angleA: 60,
+    bearingB: 120,
+    bearingB_closed: 120,
+    distRatio: 1000,
+    coordC: 0.100,
+    law: '準則第75条（街区基準点測量）',
+  },
+};
+
+function checkTolerance() {
+  const grade = document.querySelector('input[name="grade"]:checked').value;
+  const traverse = document.querySelector('input[name="traverse"]:checked').value;
+  const n = parseFloat(document.getElementById('edgeCount').value);
+  const S = parseFloat(document.getElementById('totalDist').value);
+
+  if (!n || n < 1) { alert('辺数を入力してください'); return; }
+  if (!S || S <= 0) { alert('総距離を入力してください'); return; }
+
+  const tol = TOLERANCES[grade];
+  const results = [];
+  let ngCount = 0;
+  let checkedCount = 0;
+
+  // 1. 水平角観測閉合差
+  const T_angle = tol.angleA * Math.sqrt(n);
+  const angleVal = document.getElementById('angleClose').value;
+  const hasAngle = angleVal !== '';
+  const angleClose = hasAngle ? parseFloat(angleVal) : null;
+  const angleOk = hasAngle ? Math.abs(angleClose) <= T_angle : null;
+  if (hasAngle) { checkedCount++; if (!angleOk) ngCount++; }
+  results.push({
+    name: '水平角観測 閉合差',
+    measured: angleClose,
+    limit: T_angle,
+    unit: '″',
+    formula: `${tol.angleA}″×√n = ${tol.angleA}×√${n} = ${T_angle.toFixed(1)}″`,
+    ok: angleOk,
+    hasValue: hasAngle,
+  });
+
+  // 2. 方向角閉合差
+  const T_bearing = traverse === 'combined' ? tol.bearingB : tol.bearingB_closed;
+  const bearingVal = document.getElementById('bearingClose').value;
+  const hasBearing = bearingVal !== '';
+  const bearingClose = hasBearing ? parseFloat(bearingVal) : null;
+  const bearingOk = hasBearing ? Math.abs(bearingClose) <= T_bearing : null;
+  if (hasBearing) { checkedCount++; if (!bearingOk) ngCount++; }
+  results.push({
+    name: '方向角 閉合差',
+    measured: bearingClose,
+    limit: T_bearing,
+    unit: '″',
+    formula: `固定値 ${T_bearing}″（${tol.name}・${traverse === 'combined' ? '結合' : '閉合'}）`,
+    ok: bearingOk,
+    hasValue: hasBearing,
+  });
+
+  // 3. 距離閉合差（閉合比）
+  const T_distRatio = tol.distRatio;
+  const T_distMax = S / T_distRatio; // 許容距離閉合差の最大値(m)
+  const distVal = document.getElementById('distClose').value;
+  const hasDist = distVal !== '';
+  const distClose = hasDist ? parseFloat(distVal) : null;
+  const distRatio = hasDist ? S / Math.abs(distClose) : null;
+  const distOk = hasDist ? distRatio >= T_distRatio : null;
+  if (hasDist) { checkedCount++; if (!distOk) ngCount++; }
+  results.push({
+    name: '距離 閉合差（閉合比）',
+    measured: distClose,
+    measuredRatio: distRatio,
+    limit: T_distRatio,
+    limitDist: T_distMax,
+    unit: 'm',
+    formula: `許容閉合比 1/${T_distRatio}　→　許容距離閉合差 = ${S}/${T_distRatio} = ${T_distMax.toFixed(4)} m`,
+    ok: distOk,
+    hasValue: hasDist,
+    isRatio: true,
+  });
+
+  // 4. 座標閉合差
+  const T_coord = tol.coordC * Math.sqrt(S);
+  const coordVal = document.getElementById('coordClose').value;
+  const hasCoord = coordVal !== '';
+  const coordClose = hasCoord ? parseFloat(coordVal) : null;
+  const coordOk = hasCoord ? Math.abs(coordClose) <= T_coord : null;
+  if (hasCoord) { checkedCount++; if (!coordOk) ngCount++; }
+  results.push({
+    name: '座標 閉合差',
+    measured: coordClose,
+    limit: T_coord,
+    unit: 'm',
+    formula: `${(tol.coordC*1000).toFixed(0)}mm×√S = ${(tol.coordC*1000).toFixed(0)}×√${S} = ${(T_coord*1000).toFixed(1)} mm = ${T_coord.toFixed(4)} m`,
+    ok: coordOk,
+    hasValue: hasCoord,
+  });
+
+  displayResults(results, ngCount, checkedCount, tol, traverse);
+}
+
+function displayResults(results, ngCount, checkedCount, tol, traverse) {
+  const summary = document.getElementById('summary');
+  const summaryIcon = document.getElementById('summaryIcon');
+  const summaryText = document.getElementById('summaryText');
+  const summarySub = document.getElementById('summarySub');
+  const resultItems = document.getElementById('resultItems');
+  const lawNote = document.getElementById('lawNote');
+
+  // サマリー
+  if (checkedCount === 0) {
+    summary.className = 'summary limit-only';
+    summaryIcon.textContent = '📋';
+    summaryText.textContent = '許容値を計算しました';
+    summarySub.textContent = '閉合差を入力するとOK/NG判定ができます';
+  } else if (ngCount === 0) {
+    summary.className = 'summary all-ok';
+    summaryIcon.textContent = '✅';
+    summaryText.textContent = 'すべて許容値内 OK';
+    summarySub.textContent = `判定した ${checkedCount} 項目、すべて合格`;
+  } else {
+    summary.className = 'summary has-ng';
+    summaryIcon.textContent = '❌';
+    summaryText.textContent = `許容値超過 ${ngCount} 項目 NG`;
+    summarySub.textContent = `${checkedCount} 項目中 ${ngCount} 項目が超過`;
+  }
+
+  // 各項目
+  resultItems.innerHTML = '';
+  results.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+
+    // バッジ
+    let badgeClass, badgeText;
+    if (!r.hasValue) {
+      badgeClass = 'limit-only'; badgeText = '― 未入力';
+    } else if (r.ok) {
+      badgeClass = 'ok'; badgeText = '✓ OK';
+    } else {
+      badgeClass = 'ng'; badgeText = '✗ NG';
+    }
+
+    // 許容値表示
+    let limitDisplay;
+    if (r.isRatio) {
+      limitDisplay = `1/${r.limit} 以上　(≦ ${r.limitDist.toFixed(4)} m)`;
+    } else {
+      limitDisplay = `${r.limit.toFixed(r.unit === '″' ? 1 : 4)} ${r.unit}`;
+    }
+
+    // 実測値表示
+    let measuredRow = '';
+    if (r.hasValue) {
+      let measuredDisplay;
+      if (r.isRatio) {
+        measuredDisplay = `1/${Math.round(r.measuredRatio)}　(${Math.abs(r.measured).toFixed(4)} m)`;
+      } else {
+        measuredDisplay = `${Math.abs(r.measured).toFixed(r.unit === '″' ? 1 : 4)} ${r.unit}`;
+      }
+      const valClass = r.ok ? 'ok' : 'ng';
+      measuredRow = `
+        <div class="result-row">
+          <span class="result-label">実測閉合差</span>
+          <span class="result-val ${valClass}">${measuredDisplay}</span>
+        </div>`;
+    }
+
+    div.innerHTML = `
+      <div class="result-header">
+        <span class="result-name">${r.name}</span>
+        <span class="result-badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="result-rows">
+        <div class="result-row">
+          <span class="result-label">許容値</span>
+          <span class="result-val neutral">${limitDisplay}</span>
+        </div>
+        ${measuredRow}
+      </div>
+      <div class="result-formula">${r.formula}</div>
+    `;
+    resultItems.appendChild(div);
+  });
+
+  // 条文注記
+  lawNote.innerHTML = `
+    <strong>根拠条文</strong><br>
+    ${tol.law}<br>
+    作業規程の準則（令和7年3月31日改正・令和7年4月1日施行）<br>
+    ${traverse === 'combined' ? '結合トラバース' : '閉合トラバース'}
+  `;
+
+  document.getElementById('results').className = 'results show';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAll() {
+  document.getElementById('edgeCount').value = '';
+  document.getElementById('totalDist').value = '';
+  document.getElementById('angleClose').value = '';
+  document.getElementById('bearingClose').value = '';
+  document.getElementById('distClose').value = '';
+  document.getElementById('coordClose').value = '';
+  document.getElementById('results').className = 'results';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.010 水平距離・高低差計算ツール</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #4a9eff;
+    --accent2: #7c5cfc;
+    --ok: #2ecc71;
+    --warn: #f39c12;
+    --text: #e8eaf0;
+    --text2: #8892b0;
+    --text3: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  /* ヘッダー */
+  .header { text-align: center; margin-bottom: 24px; }
+
+  .badge-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-bottom: 8px;
+  }
+
+  .badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text3);
+    background: var(--surface2);
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .title {
+    font-size: 20px; font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 4px;
+  }
+
+  .desc { font-size: 12px; color: var(--text2); }
+
+  /* カード */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .card-title::before {
+    content: ''; display: inline-block;
+    width: 3px; height: 12px;
+    background: var(--accent); border-radius: 2px;
+  }
+
+  /* 入力行 */
+  .input-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .row-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700;
+    color: var(--accent);
+    background: rgba(74,158,255,0.1);
+    border: 1px solid rgba(74,158,255,0.2);
+    border-radius: 6px;
+    padding: 2px 8px;
+    text-align: center;
+    min-width: 36px;
+  }
+
+  .input-fields { display: flex; flex-direction: column; gap: 8px; }
+
+  .field-group {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .field-label {
+    font-size: 10px; color: var(--text2); font-weight: 500;
+  }
+
+  .field-inline {
+    display: flex; gap: 6px; align-items: center;
+  }
+
+  .field-inline input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+    text-align: right;
+  }
+
+  .field-inline input:focus { border-color: var(--accent); }
+
+  .field-unit {
+    font-size: 11px; color: var(--text3);
+    white-space: nowrap; min-width: 14px;
+  }
+
+  .dist-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    text-align: right;
+  }
+
+  .dist-input:focus { border-color: var(--accent); }
+
+  /* ボタン群 */
+  .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+
+  .btn-add {
+    flex: 1;
+    background: var(--surface2);
+    color: var(--accent);
+    border: 1px dashed rgba(74,158,255,0.4);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+
+  .btn-add:hover { background: rgba(74,158,255,0.08); border-color: var(--accent); }
+
+  .btn-calc {
+    flex: 2;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none;
+    border-radius: 8px; padding: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+
+  .btn-calc:active { opacity: 0.85; }
+
+  /* 結果テーブル */
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .result-table th {
+    text-align: center;
+    color: var(--text2); font-weight: 500;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .result-table th:first-child { text-align: left; }
+
+  .result-table td {
+    padding: 9px 8px;
+    border-bottom: 1px solid rgba(46,51,82,0.4);
+    text-align: right;
+  }
+
+  .result-table td:first-child { text-align: center; }
+  .result-table tr:last-child td { border-bottom: none; }
+
+  .td-num {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent); font-size: 11px;
+  }
+
+  .td-dist {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ok); font-weight: 600; font-size: 13px;
+  }
+
+  .td-diff {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--warn); font-weight: 600; font-size: 13px;
+  }
+
+  .td-input {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text2); font-size: 11px;
+  }
+
+  /* テキスト出力 */
+  .output-area {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text);
+    line-height: 1.9; white-space: pre-wrap;
+    word-break: break-all; min-height: 60px;
+    margin-bottom: 10px;
+  }
+
+  .btn-copy {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none;
+    border-radius: 8px; padding: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; margin-bottom: 8px;
+  }
+
+  .btn-reset {
+    width: 100%;
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; cursor: pointer;
+  }
+
+  /* 数式ノート */
+  .formula-note {
+    background: rgba(74,158,255,0.05);
+    border: 1px solid rgba(74,158,255,0.15);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 11px; color: var(--text2);
+    line-height: 1.8; margin-bottom: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .formula-note strong { color: var(--accent); }
+
+  /* トースト */
+  .copy-toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ok); color: #fff;
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 700;
+    opacity: 0; transition: all 0.3s;
+    pointer-events: none; z-index: 100;
+  }
+
+  .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none; }
+
+  /* 削除ボタン */
+  .btn-del {
+    background: none; border: none;
+    color: var(--text3); font-size: 16px;
+    cursor: pointer; padding: 0 4px;
+    line-height: 1; align-self: start;
+    margin-top: 2px;
+    transition: color 0.15s;
+  }
+  .btn-del:hover { color: #e74c3c; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge-row">
+    <span class="badge">No.010</span>
+    <span class="version">v1.0</span>
+  </div>
+  <div class="title">水平距離・高低差計算ツール</div>
+  <div class="desc">斜距離＋天頂角 → 水平距離・高低差を計算</div>
+</div>
+
+<!-- 数式 -->
+<div class="formula-note">
+  <strong>水平距離</strong> = 斜距離 × sin(天頂角)<br>
+  <strong>高低差　</strong> = 斜距離 × cos(天頂角)
+</div>
+
+<!-- 入力カード -->
+<div class="card">
+  <div class="card-title">観測値の入力</div>
+  <div id="inputRows"></div>
+  <div class="btn-row">
+    <button class="btn-add" onclick="addRow()">＋ 行を追加</button>
+    <button class="btn-calc" onclick="calculate()">✦ 計算する</button>
+  </div>
+</div>
+
+<!-- 結果カード -->
+<div class="card hidden" id="resultCard">
+  <div class="card-title">計算結果</div>
+  <table class="result-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>斜距離(m)</th>
+        <th>天頂角</th>
+        <th>水平距離(m)</th>
+        <th>高低差(m)</th>
+      </tr>
+    </thead>
+    <tbody id="resultBody"></tbody>
+  </table>
+</div>
+
+<!-- テキスト出力カード -->
+<div class="card hidden" id="outputCard">
+  <div class="card-title">テキスト出力</div>
+  <div class="output-area" id="outputArea"></div>
+  <button class="btn-copy" onclick="copyText()">📋 コピー</button>
+  <button class="btn-reset" onclick="resetAll()">↺ リセット</button>
+</div>
+
+<div class="copy-toast" id="copyToast">コピーしました！</div>
+
+<script>
+let rowCount = 0;
+
+// 初期1行
+addRow();
+
+function addRow() {
+  rowCount++;
+  const id = rowCount;
+  const container = document.getElementById('inputRows');
+  const div = document.createElement('div');
+  div.className = 'input-row';
+  div.id = `row-${id}`;
+  div.innerHTML = `
+    <span class="row-num">${String(id).padStart(2,'0')}</span>
+    <div class="input-fields">
+      <div class="field-group">
+        <div class="field-label">斜距離</div>
+        <input class="dist-input" type="number" id="dist-${id}" placeholder="例: 35.250" step="0.001" min="0">
+      </div>
+      <div class="field-group">
+        <div class="field-label">天頂角（° ′ ″）</div>
+        <div class="field-inline">
+          <input type="number" id="deg-${id}" placeholder="89" min="0" max="179" step="1">
+          <span class="field-unit">°</span>
+          <input type="number" id="min-${id}" placeholder="30" min="0" max="59" step="1">
+          <span class="field-unit">′</span>
+          <input type="number" id="sec-${id}" placeholder="15" min="0" max="59.9" step="0.1">
+          <span class="field-unit">″</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn-del" onclick="delRow(${id})" title="削除">×</button>
+  `;
+  container.appendChild(div);
+}
+
+function delRow(id) {
+  const el = document.getElementById(`row-${id}`);
+  if (el) el.remove();
+}
+
+function dmsToRad(deg, min, sec) {
+  const total = deg + min / 60 + sec / 3600;
+  return total * Math.PI / 180;
+}
+
+function calculate() {
+  const rows = document.querySelectorAll('.input-row');
+  const results = [];
+
+  rows.forEach((row, idx) => {
+    const id = row.id.replace('row-', '');
+    const dist = parseFloat(document.getElementById(`dist-${id}`)?.value);
+    const deg  = parseFloat(document.getElementById(`deg-${id}`)?.value  || 0);
+    const min  = parseFloat(document.getElementById(`min-${id}`)?.value  || 0);
+    const sec  = parseFloat(document.getElementById(`sec-${id}`)?.value  || 0);
+
+    if (isNaN(dist) || dist <= 0) return;
+    if (isNaN(deg)) return;
+
+    const rad = dmsToRad(deg, min || 0, sec || 0);
+    const hDist = dist * Math.sin(rad);
+    const vDiff = dist * Math.cos(rad);
+
+    results.push({
+      num: idx + 1,
+      dist,
+      deg, min: min || 0, sec: sec || 0,
+      hDist,
+      vDiff,
+    });
+  });
+
+  if (results.length === 0) {
+    alert('斜距離と天頂角を入力してください');
+    return;
+  }
+
+  renderResults(results);
+}
+
+function renderResults(results) {
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML = '';
+
+  results.forEach(r => {
+    const tr = document.createElement('tr');
+    const angleStr = `${r.deg}°${String(r.min).padStart(2,'0')}′${r.sec.toFixed(1).padStart(4,'0')}″`;
+    const sign = r.vDiff >= 0 ? '+' : '';
+    tr.innerHTML = `
+      <td class="td-num">${String(r.num).padStart(2,'0')}</td>
+      <td class="td-input">${r.dist.toFixed(3)}</td>
+      <td class="td-input">${angleStr}</td>
+      <td class="td-dist">${r.hDist.toFixed(3)}</td>
+      <td class="td-diff">${sign}${r.vDiff.toFixed(3)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // テキスト出力
+  const lines = results.map(r => {
+    const angleStr = `${r.deg}°${String(r.min).padStart(2,'0')}′${r.sec.toFixed(1)}″`;
+    const sign = r.vDiff >= 0 ? '+' : '';
+    return `${String(r.num).padStart(2,'0')}　斜距離:${r.dist.toFixed(3)}m　天頂角:${angleStr}　水平距離:${r.hDist.toFixed(3)}m　高低差:${sign}${r.vDiff.toFixed(3)}m`;
+  });
+  document.getElementById('outputArea').textContent = lines.join('\n');
+
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('outputCard').classList.remove('hidden');
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyText() {
+  const text = document.getElementById('outputArea').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+function resetAll() {
+  document.getElementById('inputRows').innerHTML = '';
+  document.getElementById('resultBody').innerHTML = '';
+  document.getElementById('outputArea').textContent = '';
+  document.getElementById('resultCard').classList.add('hidden');
+  document.getElementById('outputCard').classList.add('hidden');
+  rowCount = 0;
+  addRow();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.009 写真情報リストアップツール</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #4a9eff;
+    --accent2: #7c5cfc;
+    --ok: #2ecc71;
+    --text: #e8eaf0;
+    --text2: #8892b0;
+    --text3: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  /* ヘッダー */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--surface2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .title {
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .desc {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* ドロップエリア */
+  .drop-area {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 16px;
+    background: var(--surface);
+  }
+
+  .drop-area.dragover {
+    border-color: var(--accent);
+    background: rgba(74,158,255,0.05);
+  }
+
+  .drop-icon { font-size: 36px; margin-bottom: 10px; }
+
+  .drop-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .drop-sub {
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .drop-btn {
+    display: inline-block;
+    margin-top: 14px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  #fileInput { display: none; }
+
+  /* カード */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title-left::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* テーブル */
+  .photo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .photo-table th {
+    text-align: left;
+    color: var(--text2);
+    font-weight: 500;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .photo-table td {
+    padding: 8px 8px;
+    border-bottom: 1px solid rgba(46,51,82,0.5);
+    vertical-align: middle;
+  }
+
+  .photo-table tr:last-child td { border-bottom: none; }
+
+  .photo-num {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .photo-name {
+    color: var(--text);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  .photo-date {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ok);
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
+  .photo-date.no-exif {
+    color: var(--text3);
+    font-size: 10px;
+  }
+
+  /* テキスト出力エリア */
+  .output-area {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 80px;
+    margin-bottom: 10px;
+  }
+
+  /* ボタン群 */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-copy {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-copy:active { opacity: 0.8; }
+
+  .btn-clear {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* フォーマット選択 */
+  .format-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .format-row label { flex: 1; min-width: 100px; }
+  .format-row input[type="radio"] { display: none; }
+
+  .format-btn {
+    display: block;
+    text-align: center;
+    padding: 7px 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    background: var(--surface2);
+    transition: all 0.15s;
+  }
+
+  .format-row input[type="radio"]:checked + .format-btn {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(74,158,255,0.1);
+  }
+
+  /* 件数バッジ */
+  .count-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ok);
+    background: rgba(46,204,113,0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(46,204,113,0.2);
+  }
+
+  /* コピー完了 */
+  .copy-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ok);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge-row">
+    <span class="badge">No.009</span>
+    <span class="version">v1.2</span>
+  </div>
+  <div class="title">写真情報リストアップツール</div>
+  <div class="desc">画像をまとめてアップ → ファイル名・撮影日時を一覧テキスト化</div>
+</div>
+
+<!-- ドロップエリア -->
+<div class="drop-area" id="dropArea">
+  <div class="drop-icon">📷</div>
+  <div class="drop-text">写真をここにドロップ</div>
+  <div class="drop-sub">JPG / JPEG 複数枚対応</div>
+  <button class="drop-btn" onclick="document.getElementById('fileInput').click()">ファイルを選択</button>
+  <input type="file" id="fileInput" accept="image/*" multiple>
+</div>
+
+<!-- 一覧テーブル -->
+<div class="card hidden" id="tableCard">
+  <div class="card-title">
+    <span class="card-title-left">読み込み結果</span>
+    <span class="count-badge" id="countBadge">0 枚</span>
+  </div>
+  <table class="photo-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>ファイル名</th>
+        <th>日付</th>
+        <th>時刻</th>
+      </tr>
+    </thead>
+    <tbody id="photoTableBody"></tbody>
+  </table>
+</div>
+
+<!-- 出力エリア -->
+<div class="card hidden" id="outputCard">
+  <div class="card-title">
+    <span class="card-title-left">テキスト出力</span>
+  </div>
+
+  <div class="format-row">
+    <label><input type="radio" name="fmt" value="name_date_time" checked><span class="format-btn">ファイル名・日付・時刻</span></label>
+    <label><input type="radio" name="fmt" value="name_date"><span class="format-btn">ファイル名・日付</span></label>
+    <label><input type="radio" name="fmt" value="date_time"><span class="format-btn">日付・時刻のみ</span></label>
+    <label><input type="radio" name="fmt" value="date_only"><span class="format-btn">日付のみ</span></label>
+    <label><input type="radio" name="fmt" value="name_only"><span class="format-btn">ファイル名のみ</span></label>
+  </div>
+
+  <div class="output-area" id="outputArea"></div>
+
+  <div class="btn-row">
+    <button class="btn-copy" onclick="copyText()">📋 テキストをコピー</button>
+    <button class="btn-clear" onclick="clearAll()">↺ リセット</button>
+  </div>
+</div>
+
+<div class="copy-toast" id="copyToast">コピーしました！</div>
+
+<script>
+// ====== EXIF読み取り（exif-js ライブラリ使用） ======
+function getExifDate(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      // exif-js はArrayBufferから直接読める
+      const exifData = EXIF.readFromBinaryFile(e.target.result);
+      let dateStr = null;
+
+      if (exifData) {
+        const raw = exifData.DateTimeOriginal || exifData.DateTimeDigitized || exifData.DateTime;
+        if (raw) {
+          // "2024:01:15 14:30:00" → "2024/01/15 14:30:00"
+          dateStr = raw.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1/$2/$3');
+        }
+      }
+      resolve(dateStr);
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ====== データ管理 ======
+let photoData = [];
+
+// ====== ファイル処理 ======
+async function processFiles(files) {
+  const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (newFiles.length === 0) return;
+
+  for (const file of newFiles) {
+    const exifDate = await getExifDate(file);
+    photoData.push({
+      name: file.name,
+      date: exifDate,
+    });
+  }
+
+  renderTable();
+  renderOutput();
+  document.getElementById('tableCard').classList.remove('hidden');
+  document.getElementById('outputCard').classList.remove('hidden');
+}
+
+// ====== テーブル描画 ======
+function renderTable() {
+  const tbody = document.getElementById('photoTableBody');
+  tbody.innerHTML = '';
+  document.getElementById('countBadge').textContent = `${photoData.length} 枚`;
+
+  photoData.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    const hasDate = p.date && p.date.length > 0;
+    const datePart = hasDate ? p.date.split(' ')[0] : '―';
+    const timePart = hasDate ? (p.date.split(' ')[1] || '―') : '―';
+    tr.innerHTML = `
+      <td class="photo-num">${String(i+1).padStart(2,'0')}</td>
+      <td class="photo-name">${escHtml(p.name)}</td>
+      <td class="${hasDate ? 'photo-date' : 'photo-date no-exif'}">${datePart}</td>
+      <td class="${hasDate ? 'photo-date' : 'photo-date no-exif'}">${timePart}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ====== テキスト出力 ======
+function renderOutput() {
+  const fmt = document.querySelector('input[name="fmt"]:checked').value;
+  const lines = photoData.map((p, i) => {
+    const num = String(i+1).padStart(2,'0');
+    const datePart = p.date ? p.date.split(' ')[0] : '日付不明';
+    const timePart = p.date ? (p.date.split(' ')[1] || '時刻不明') : '時刻不明';
+    if (fmt === 'name_date_time') return `${num}　${p.name}　${datePart}　${timePart}`;
+    if (fmt === 'name_date')      return `${num}　${p.name}　${datePart}`;
+    if (fmt === 'date_time')      return `${num}　${datePart}　${timePart}`;
+    if (fmt === 'date_only')      return `${num}　${datePart}`;
+    if (fmt === 'name_only')      return `${num}　${p.name}`;
+  });
+  document.getElementById('outputArea').textContent = lines.join('\n');
+}
+
+// ====== コピー ======
+function copyText() {
+  const text = document.getElementById('outputArea').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+// ====== リセット ======
+function clearAll() {
+  photoData = [];
+  document.getElementById('photoTableBody').innerHTML = '';
+  document.getElementById('outputArea').textContent = '';
+  document.getElementById('tableCard').classList.add('hidden');
+  document.getElementById('outputCard').classList.add('hidden');
+  document.getElementById('fileInput').value = '';
+}
+
+// ====== ドロップ＆ファイル選択 ======
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('fileInput');
+
+dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('dragover'); });
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+dropArea.addEventListener('drop', e => {
+  e.preventDefault();
+  dropArea.classList.remove('dragover');
+  processFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', e => processFiles(e.target.files));
+
+// フォーマット変更時に再描画
+document.querySelectorAll('input[name="fmt"]').forEach(r => {
+  r.addEventListener('change', renderOutput);
+});
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
