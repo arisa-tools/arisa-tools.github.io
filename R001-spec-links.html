@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R001 仕様書・準則リンク集</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --border: #d8d3c8;
+    --border-strong: #b0a898;
+    --text: #1a1814;
+    --text-sub: #6b6459;
+    --text-mute: #9d9289;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0ea;
+    --accent2: #7a4f2d;
+    --accent2-light: #f5ede6;
+    --danger: #8b2e2e;
+    --danger-light: #fceaea;
+    --tag-bg: #ede9e2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ========== HEADER ========== */
+  .site-header {
+    background: var(--text);
+    color: var(--bg);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .site-header .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .site-header .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    letter-spacing: 0.05em;
+  }
+  .site-header .title {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .site-header .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #888;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-admin {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid #555;
+    color: #ccc;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-admin:hover { border-color: #aaa; color: #fff; }
+
+  /* ========== MAIN LAYOUT ========== */
+  .main-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* ========== SEARCH ========== */
+  .search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+
+  /* ========== SECTION ========== */
+  .section {
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-header:hover { background: #faf9f7; }
+  .section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    letter-spacing: 0.05em;
+  }
+  .tag-mlit  { background: #ddeeff; color: #1a4a7a; }
+  .tag-maff  { background: #ddf0e2; color: #1a5a2e; }
+    .tag-oita-civil { background: #fff0d8; color: #7a4a00; }
+  .tag-oita-agri { background: #f0e8ff; color: #4a1a7a; }
+  .tag-custom { background: var(--tag-bg); color: var(--text-sub); }
+
+  .section-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .section-toggle {
+    font-size: 18px;
+    color: var(--text-mute);
+    transition: transform 0.2s;
+  }
+  .section.collapsed .section-toggle { transform: rotate(-90deg); }
+  .section.collapsed .section-body { display: none; }
+
+  .section-body { padding: 0; }
+
+  /* ========== DOCUMENT GROUP ========== */
+  .doc-group {
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-group:last-child { border-bottom: none; }
+
+  .doc-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px 10px 24px;
+    background: #faf9f7;
+  }
+  .doc-group-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-sub);
+  }
+  .doc-group-link {
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .doc-group-link:hover { border-color: var(--accent); }
+
+  /* ========== LINK ITEMS ========== */
+  .link-list { padding: 4px 0; }
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px 8px 32px;
+    transition: background 0.15s;
+  }
+  .link-item:hover { background: var(--accent-light); }
+  .link-year {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mute);
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+  .link-label {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+  }
+  .link-pdf {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 3px 10px;
+    border: 1px solid var(--accent);
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .link-pdf:hover { background: var(--accent); color: #fff; }
+  .link-pdf.no-link {
+    color: var(--text-mute);
+    border-color: var(--border);
+    pointer-events: none;
+  }
+
+  /* ========== EMPTY STATE ========== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-mute);
+    font-size: 14px;
+  }
+
+  /* ========== MODAL OVERLAY ========== */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.active { display: flex; }
+
+  /* ========== AUTH MODAL ========== */
+  .auth-modal {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    padding: 36px 40px;
+    width: 340px;
+  }
+  .auth-modal h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .auth-modal p {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 20px;
+  }
+  .auth-modal input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    margin-bottom: 12px;
+    outline: none;
+  }
+  .auth-modal input:focus { border-color: var(--accent); }
+  .auth-error {
+    font-size: 12px;
+    color: var(--danger);
+    margin-bottom: 10px;
+    display: none;
+  }
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    padding: 8px 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: var(--tag-bg); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #234a30; border-color: #234a30; }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+  }
+  .btn-danger:hover { background: #6e2424; }
+
+  /* ========== ADMIN PANEL ========== */
+  .admin-panel {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    width: 700px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+  }
+  .admin-header h2 { font-size: 15px; font-weight: 700; }
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-mute);
+    line-height: 1;
+  }
+  .btn-close:hover { color: var(--text); }
+
+  .admin-body { padding: 20px; }
+
+  .admin-section-list { margin-bottom: 24px; }
+  .admin-section-item {
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .admin-section-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #faf9f7;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-section-bar span { flex: 1; font-size: 13px; font-weight: 500; }
+  .btn-sm {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-sm:hover { background: var(--tag-bg); }
+  .btn-sm.danger { color: var(--danger); border-color: var(--danger); }
+  .btn-sm.danger:hover { background: var(--danger-light); }
+
+  .admin-docs { padding: 8px 12px; }
+  .admin-doc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .admin-doc-item:last-child { border-bottom: none; }
+  .admin-doc-item .doc-year { font-family: 'IBM Plex Mono', monospace; color: var(--text-mute); min-width: 90px; }
+  .admin-doc-item .doc-label { flex: 1; color: var(--text-sub); }
+  .admin-doc-item .doc-url { font-family: 'IBM Plex Mono', monospace; color: var(--text-mute); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Forms */
+  .form-box {
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fdfcfa;
+  }
+  .form-box h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-sub); letter-spacing: 0.03em; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .form-row label { font-size: 11px; color: var(--text-sub); display: block; margin-bottom: 3px; }
+  .form-group { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+  .form-group.full { flex: 100%; min-width: 100%; }
+  .form-group input, .form-group select {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ========== FOOTER ========== */
+  .site-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--text-mute);
+    font-family: 'IBM Plex Mono', monospace;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="logo">
+    <span class="badge">R-001</span>
+    <span class="title">仕様書・準則リンク集</span>
+  </div>
+  <div class="header-right">
+    <span class="meta">v1.0</span>
+    <button class="btn-admin" onclick="openAuth()">⚙ 管理</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="機関名・仕様書名で検索…" oninput="renderView()">
+  </div>
+  <div id="viewArea"></div>
+</div>
+
+<footer class="site-footer">
+  Aiaこんぶ ツール部 — R-001 仕様書・準則リンク集 v1.0 — データはブラウザに保存されます
+</footer>
+
+<!-- AUTH MODAL -->
+<div class="overlay" id="authOverlay">
+  <div class="auth-modal">
+    <h2>🔒 管理画面</h2>
+    <p>管理パスワードを入力してください</p>
+    <input type="password" id="authInput" placeholder="パスワード" onkeydown="if(event.key==='Enter')checkAuth()">
+    <div class="auth-error" id="authError">パスワードが違います</div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeAuth()">キャンセル</button>
+      <button class="btn btn-primary" onclick="checkAuth()">ログイン</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="overlay" id="adminOverlay">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <h2>⚙ 管理画面</h2>
+      <button class="btn-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="admin-body">
+
+      <!-- 既存セクション一覧 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="font-size:13px;font-weight:700;color:var(--text-sub);">▼ 登録済みセクション</h3>
+      </div>
+      <div class="admin-section-list" id="adminSectionList"></div>
+
+      <hr class="divider">
+
+      <!-- セクション追加 -->
+      <div class="form-box">
+        <h3>＋ セクション（機関）を追加</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>機関名</label>
+            <input type="text" id="newSecName" placeholder="例）大分県農林水産部">
+          </div>
+          <div class="form-group">
+            <label>タグ色</label>
+            <select id="newSecTag">
+              <option value="tag-mlit">国交省（青）</option>
+              <option value="tag-maff">農水省（緑）</option>
+              <option value="tag-oita-civil">大分県土木（橙）</option>
+              <option value="tag-oita-agri">大分県農林（紫）</option>
+              <option value="tag-custom">その他（グレー）</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addSection()">追加</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- リンク追加 -->
+      <div class="form-box">
+        <h3>＋ リンク（仕様書）を追加</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>セクション</label>
+            <select id="newLinkSection" style="min-width:160px;"></select>
+          </div>
+          <div class="form-group">
+            <label>グループ名（仕様書名）</label>
+            <input type="text" id="newLinkGroup" placeholder="例）共通仕様書">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>年度ラベル</label>
+            <input type="text" id="newLinkYear" placeholder="例）令和8年4月1日発行">
+          </div>
+          <div class="form-group">
+            <label>表示ラベル</label>
+            <input type="text" id="newLinkLabel" placeholder="例）令和8年度版">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full">
+            <label>掲載ページURL（任意）</label>
+            <input type="text" id="newLinkPageUrl" placeholder="https://...">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full">
+            <label>PDF直リンクURL（任意）</label>
+            <input type="text" id="newLinkPdfUrl" placeholder="https://...">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addLink()">追加</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- HTMLエクスポート -->
+      <div class="form-box" style="border-color:var(--accent);background:var(--accent-light);">
+        <h3 style="color:var(--accent);">📤 HTMLエクスポート（AI更新用）</h3>
+        <p style="font-size:12px;color:var(--text-sub);margin-bottom:12px;line-height:1.6;">
+          現在のデータを埋め込んだHTMLファイルをダウンロードします。<br>
+          GeminiやClaudeに渡して「新年度のリンクを追加して」と依頼できます。
+        </p>
+        <div style="background:#fff;border:1px solid var(--border);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text-sub);line-height:1.8;">
+          <strong>AIへの依頼文テンプレート：</strong><br>
+          添付のHTMLファイルの仕様書リンク集を更新してください。<br>
+          以下のリンクを追加してください：<br>
+          ・セクション：〇〇省／大分県〇〇部<br>
+          ・グループ名：〇〇仕様書<br>
+          ・年度：令和〇年4月1日発行<br>
+          ・PDF URL：https://...<br>
+          defaultData()関数内のデータを更新し、HTMLファイル全体を返してください。
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" style="background:var(--accent);" onclick="exportHTML()">📥 HTMLをダウンロード</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- パスワード変更 -->
+      <div class="form-box">
+        <h3>🔑 パスワード変更</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>新しいパスワード</label>
+            <input type="password" id="newPw1" placeholder="新パスワード">
+          </div>
+          <div class="form-group">
+            <label>確認</label>
+            <input type="password" id="newPw2" placeholder="もう一度入力">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="changePassword()">変更</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LINK MODAL -->
+<div class="overlay" id="editLinkOverlay">
+  <div class="auth-modal" style="width:420px;">
+    <h2 style="margin-bottom:16px;">✏ リンクを編集</h2>
+    <input type="hidden" id="editLinkId">
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div><label style="font-size:11px;color:var(--text-sub);">年度ラベル</label><input type="text" id="editYear" style="width:100%;padding:7px 10px;border:1px solid var(--border);font-size:13px;margin-top:3px;"></div>
+      <div><label style="font-size:11px;color:var(--text-sub);">表示ラベル</label><input type="text" id="editLabel" style="width:100%;padding:7px 10px;border:1px solid var(--border);font-size:13px;margin-top:3px;"></div>
+      <div><label style="font-size:11px;color:var(--text-sub);">掲載ページURL</label><input type="text" id="editPageUrl" style="width:100%;padding:7px 10px;border:1px solid var(--border);font-size:13px;margin-top:3px;"></div>
+      <div><label style="font-size:11px;color:var(--text-sub);">PDF直リンクURL</label><input type="text" id="editPdfUrl" style="width:100%;padding:7px 10px;border:1px solid var(--border);font-size:13px;margin-top:3px;"></div>
+    </div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn" onclick="closeEditLink()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEditLink()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+const STORAGE_KEY = 'r001_data';
+const PW_KEY = 'r001_pw';
+const DEFAULT_PW = 'aiakonbu';
+
+function getPassword() {
+  return localStorage.getItem(PW_KEY) || DEFAULT_PW;
+}
+
+function defaultData() {
+  return {
+    sections: [
+      {
+        id: 's1',
+        name: '国土交通省',
+        tag: 'tag-mlit',
+        groups: [
+          {
+            id: 'g1',
+            name: '公共測量 作業規程の準則',
+            pageUrl: 'https://www.gsi.go.jp/LAW/2009-top.html',
+            links: [
+              { id: 'l1', year: '令和6年3月31日改正', label: '令和6年度版', pdfUrl: 'https://www.gsi.go.jp/common/000234947.pdf' },
+              { id: 'l2', year: '令和5年3月31日改正', label: '令和5年度版', pdfUrl: '' },
+            ]
+          },
+          {
+            id: 'g2',
+            name: '電子国土基本図（地図情報）製品仕様書',
+            pageUrl: 'https://www.gsi.go.jp/kihonjohochousa/kihonjohochousa41030.html',
+            links: [
+              { id: 'l3', year: '令和5年3月', label: '第3.1版', pdfUrl: '' },
+            ]
+          }
+        ]
+      },
+      {
+        id: 's2',
+        name: '農林水産省',
+        tag: 'tag-maff',
+        groups: [
+          {
+            id: 'g3',
+            name: '土地改良測量設計技術基準 測量編',
+            pageUrl: 'https://www.maff.go.jp/j/nousin/seko/technology/index.html',
+            links: [
+              { id: 'l4', year: '令和4年4月1日', label: '令和4年版', pdfUrl: '' },
+            ]
+          }
+        ]
+      },
+      {
+        id: 's3',
+        name: '大分県土木建築部',
+        tag: 'tag-oita-civil',
+        groups: [
+          {
+            id: 'g4',
+            name: '大分県土木建築部 共通仕様書',
+            pageUrl: 'https://www.pref.oita.jp/soshiki/13500/kyoutsushiyousho.html',
+            links: [
+              { id: 'l5', year: '令和7年4月1日発行', label: '令和7年度版', pdfUrl: '' },
+              { id: 'l6', year: '令和6年4月1日発行', label: '令和6年度版', pdfUrl: '' },
+            ]
+          },
+          {
+            id: 'g5',
+            name: '大分県土木建築部 測量業務共通仕様書',
+            pageUrl: 'https://www.pref.oita.jp/soshiki/13500/kyoutsushiyousho.html',
+            links: [
+              { id: 'l7', year: '令和7年4月1日発行', label: '令和7年度版', pdfUrl: '' },
+            ]
+          }
+        ]
+      },
+      {
+        id: 's4',
+        name: '大分県農林水産部',
+        tag: 'tag-oita-agri',
+        groups: [
+          {
+            id: 'g6',
+            name: '大分県農林水産部 測量業務共通仕様書',
+            pageUrl: '',
+            links: [
+              { id: 'l8', year: '令和7年4月1日発行', label: '令和7年度版', pdfUrl: '' },
+              { id: 'l9', year: '令和6年4月1日発行', label: '令和6年度版', pdfUrl: '' },
+            ]
+          }
+        ]
+      }
+    ]
+  };
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : defaultData();
+  } catch { return defaultData(); }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+// ========== RENDER VIEW ==========
+function renderView() {
+  const data = loadData();
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const area = document.getElementById('viewArea');
+
+  let html = '';
+  let anyVisible = false;
+
+  data.sections.forEach(sec => {
+    const secNameMatch = sec.name.toLowerCase().includes(q);
+    let groupsHtml = '';
+    let secVisible = false;
+
+    sec.groups.forEach(grp => {
+      const grpNameMatch = grp.name.toLowerCase().includes(q);
+      const linksMatch = grp.links.some(l =>
+        l.year.toLowerCase().includes(q) || l.label.toLowerCase().includes(q)
+      );
+      if (q && !secNameMatch && !grpNameMatch && !linksMatch) return;
+      secVisible = true;
+
+      let linksHtml = '';
+      grp.links.forEach(lnk => {
+        const pdfBtn = lnk.pdfUrl
+          ? `<a class="link-pdf" href="${lnk.pdfUrl}" target="_blank">PDF</a>`
+          : `<span class="link-pdf no-link">PDF未登録</span>`;
+        linksHtml += `
+          <div class="link-item">
+            <span class="link-year">${lnk.year}</span>
+            <span class="link-label">${lnk.label}</span>
+            ${pdfBtn}
+          </div>`;
+      });
+
+      const pageLink = grp.pageUrl
+        ? `<a class="doc-group-link" href="${grp.pageUrl}" target="_blank">掲載ページ →</a>`
+        : '';
+
+      groupsHtml += `
+        <div class="doc-group">
+          <div class="doc-group-header">
+            <span class="doc-group-title">${grp.name}</span>
+            ${pageLink}
+          </div>
+          <div class="link-list">${linksHtml || '<div style="padding:10px 32px;font-size:12px;color:var(--text-mute);">リンク未登録</div>'}</div>
+        </div>`;
+    });
+
+    if (!secVisible && q) return;
+    anyVisible = true;
+
+    const tagLabel = {
+      'tag-mlit': '国交省', 'tag-maff': '農水省',
+      'tag-oita-civil': '大分県土木', 'tag-oita-agri': '大分県農林', 'tag-custom': 'その他'
+    }[sec.tag] || 'その他';
+
+    html += `
+      <div class="section" id="sec-${sec.id}">
+        <div class="section-header" onclick="toggleSection('${sec.id}')">
+          <div class="section-title-wrap">
+            <span class="section-tag ${sec.tag}">${tagLabel}</span>
+            <span class="section-name">${sec.name}</span>
+          </div>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          ${groupsHtml || '<div style="padding:16px 18px;font-size:12px;color:var(--text-mute);">グループ未登録</div>'}
+        </div>
+      </div>`;
+  });
+
+  if (!anyVisible) {
+    html = `<div class="empty-state">「${q}」に一致する仕様書が見つかりませんでした</div>`;
+  }
+
+  area.innerHTML = html;
+}
+
+function toggleSection(id) {
+  const el = document.getElementById('sec-' + id);
+  if (el) el.classList.toggle('collapsed');
+}
+
+// ========== AUTH ==========
+function openAuth() {
+  document.getElementById('authOverlay').classList.add('active');
+  document.getElementById('authInput').value = '';
+  document.getElementById('authError').style.display = 'none';
+  setTimeout(() => document.getElementById('authInput').focus(), 100);
+}
+function closeAuth() {
+  document.getElementById('authOverlay').classList.remove('active');
+}
+function checkAuth() {
+  const val = document.getElementById('authInput').value;
+  if (val === getPassword()) {
+    closeAuth();
+    openAdmin();
+  } else {
+    document.getElementById('authError').style.display = 'block';
+  }
+}
+
+// ========== ADMIN ==========
+function openAdmin() {
+  renderAdminSections();
+  renderAdminLinkSelect();
+  document.getElementById('adminOverlay').classList.add('active');
+}
+function closeAdmin() {
+  document.getElementById('adminOverlay').classList.remove('active');
+  renderView();
+}
+
+function renderAdminSections() {
+  const data = loadData();
+  const area = document.getElementById('adminSectionList');
+  if (!data.sections.length) {
+    area.innerHTML = '<div style="font-size:12px;color:var(--text-mute);padding:8px;">セクションがありません</div>';
+    return;
+  }
+  area.innerHTML = data.sections.map(sec => `
+    <div class="admin-section-item">
+      <div class="admin-section-bar">
+        <span class="section-tag ${sec.tag}" style="font-size:10px;padding:1px 6px;">${sec.tag.replace('tag-','')}</span>
+        <span>${sec.name}</span>
+        <button class="btn-sm" onclick="addGroupPrompt('${sec.id}')">＋グループ追加</button>
+        <button class="btn-sm danger" onclick="deleteSection('${sec.id}')">削除</button>
+      </div>
+      <div class="admin-docs">
+        ${sec.groups.map(grp => `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-size:12px;font-weight:500;color:var(--text-sub);">📄 ${grp.name}</span>
+              <button class="btn-sm danger" onclick="deleteGroup('${sec.id}','${grp.id}')">削除</button>
+            </div>
+            ${grp.links.map(lnk => `
+              <div class="admin-doc-item">
+                <span class="doc-year">${lnk.year}</span>
+                <span class="doc-label">${lnk.label}</span>
+                <span class="doc-url">${lnk.pdfUrl || '—'}</span>
+                <button class="btn-sm" onclick="openEditLink('${sec.id}','${grp.id}','${lnk.id}')">編集</button>
+                <button class="btn-sm danger" onclick="deleteLink('${sec.id}','${grp.id}','${lnk.id}')">削除</button>
+              </div>`).join('')}
+            ${!grp.links.length ? '<div style="font-size:11px;color:var(--text-mute);padding:4px 0;">リンク未登録</div>' : ''}
+          </div>`).join('')}
+        ${!sec.groups.length ? '<div style="font-size:11px;color:var(--text-mute);">グループ未登録</div>' : ''}
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminLinkSelect() {
+  const data = loadData();
+  const sel = document.getElementById('newLinkSection');
+  sel.innerHTML = data.sections.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function addSection() {
+  const name = document.getElementById('newSecName').value.trim();
+  const tag = document.getElementById('newSecTag').value;
+  if (!name) { alert('機関名を入力してください'); return; }
+  const data = loadData();
+  data.sections.push({ id: uid(), name, tag, groups: [] });
+  saveData(data);
+  document.getElementById('newSecName').value = '';
+  renderAdminSections();
+  renderAdminLinkSelect();
+}
+
+function deleteSection(sid) {
+  if (!confirm('このセクション（機関）を削除しますか？\n中のグループ・リンクもすべて削除されます。')) return;
+  const data = loadData();
+  data.sections = data.sections.filter(s => s.id !== sid);
+  saveData(data);
+  renderAdminSections();
+  renderAdminLinkSelect();
+}
+
+function addGroupPrompt(sid) {
+  const name = prompt('グループ名（仕様書名）を入力:');
+  if (!name) return;
+  const pageUrl = prompt('掲載ページURL（任意・スキップはEnter）:') || '';
+  const data = loadData();
+  const sec = data.sections.find(s => s.id === sid);
+  if (sec) sec.groups.push({ id: uid(), name, pageUrl, links: [] });
+  saveData(data);
+  renderAdminSections();
+}
+
+function deleteGroup(sid, gid) {
+  if (!confirm('このグループを削除しますか？')) return;
+  const data = loadData();
+  const sec = data.sections.find(s => s.id === sid);
+  if (sec) sec.groups = sec.groups.filter(g => g.id !== gid);
+  saveData(data);
+  renderAdminSections();
+}
+
+function addLink() {
+  const sid = document.getElementById('newLinkSection').value;
+  const groupName = document.getElementById('newLinkGroup').value.trim();
+  const year = document.getElementById('newLinkYear').value.trim();
+  const label = document.getElementById('newLinkLabel').value.trim();
+  const pageUrl = document.getElementById('newLinkPageUrl').value.trim();
+  const pdfUrl = document.getElementById('newLinkPdfUrl').value.trim();
+
+  if (!year || !label) { alert('年度ラベルと表示ラベルは必須です'); return; }
+
+  const data = loadData();
+  const sec = data.sections.find(s => s.id === sid);
+  if (!sec) return;
+
+  let grp = sec.groups.find(g => g.name === groupName);
+  if (!grp) {
+    grp = { id: uid(), name: groupName || '未分類', pageUrl, links: [] };
+    sec.groups.push(grp);
+  }
+  grp.links.unshift({ id: uid(), year, label, pdfUrl });
+  saveData(data);
+
+  ['newLinkGroup','newLinkYear','newLinkLabel','newLinkPageUrl','newLinkPdfUrl'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  renderAdminSections();
+}
+
+function deleteLink(sid, gid, lid) {
+  if (!confirm('このリンクを削除しますか？')) return;
+  const data = loadData();
+  const sec = data.sections.find(s => s.id === sid);
+  if (!sec) return;
+  const grp = sec.groups.find(g => g.id === gid);
+  if (grp) grp.links = grp.links.filter(l => l.id !== lid);
+  saveData(data);
+  renderAdminSections();
+}
+
+// ========== EDIT LINK ==========
+let _editCtx = {};
+function openEditLink(sid, gid, lid) {
+  const data = loadData();
+  const sec = data.sections.find(s => s.id === sid);
+  const grp = sec && sec.groups.find(g => g.id === gid);
+  const lnk = grp && grp.links.find(l => l.id === lid);
+  if (!lnk) return;
+  _editCtx = { sid, gid, lid };
+  document.getElementById('editYear').value = lnk.year;
+  document.getElementById('editLabel').value = lnk.label;
+  document.getElementById('editPageUrl').value = lnk.pdfUrl ? '' : (grp.pageUrl || '');
+  document.getElementById('editPdfUrl').value = lnk.pdfUrl;
+  document.getElementById('editLinkOverlay').classList.add('active');
+}
+function closeEditLink() {
+  document.getElementById('editLinkOverlay').classList.remove('active');
+}
+function saveEditLink() {
+  const data = loadData();
+  const sec = data.sections.find(s => s.id === _editCtx.sid);
+  const grp = sec && sec.groups.find(g => g.id === _editCtx.gid);
+  const lnk = grp && grp.links.find(l => l.id === _editCtx.lid);
+  if (!lnk) return;
+  lnk.year = document.getElementById('editYear').value.trim();
+  lnk.label = document.getElementById('editLabel').value.trim();
+  lnk.pdfUrl = document.getElementById('editPdfUrl').value.trim();
+  saveData(data);
+  closeEditLink();
+  renderAdminSections();
+}
+
+// ========== EXPORT ==========
+function exportHTML() {
+  const data = loadData();
+  const dataJson = JSON.stringify(data, null, 2);
+
+  // DOMからHTML全体を取得
+  let src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+  // defaultData()関数ブロックを最新データで丸ごと置き換え
+  const startMarker = 'function defaultData() {';
+  const startIdx = src.indexOf(startMarker);
+  if (startIdx === -1) {
+    alert('エクスポートに失敗しました（マーカーが見つかりません）');
+    return;
+  }
+
+  // defaultData関数の終わり（対応する閉じ括弧）を探す
+  let depth = 0;
+  let endIdx = -1;
+  for (let i = startIdx; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth--;
+      if (depth === 0) { endIdx = i + 1; break; }
+    }
+  }
+
+  if (endIdx === -1) {
+    alert('エクスポートに失敗しました（関数の終端が見つかりません）');
+    return;
+  }
+
+  const newFunc = `function defaultData() {\n  return ${dataJson};\n}`;
+  const exported = src.slice(0, startIdx) + newFunc + src.slice(endIdx);
+
+  const blob = new Blob([exported], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.download = `R001-spec-links_${stamp}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== PASSWORD ==========
+function changePassword() {
+  const p1 = document.getElementById('newPw1').value;
+  const p2 = document.getElementById('newPw2').value;
+  if (!p1) { alert('パスワードを入力してください'); return; }
+  if (p1 !== p2) { alert('パスワードが一致しません'); return; }
+  localStorage.setItem(PW_KEY, p1);
+  document.getElementById('newPw1').value = '';
+  document.getElementById('newPw2').value = '';
+  alert('パスワードを変更しました');
+}
+
+// ========== INIT ==========
+renderView();
+</script>
+</body>
+</html>
