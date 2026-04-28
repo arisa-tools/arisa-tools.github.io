@@ -207,16 +207,20 @@
     animation: slideUp 0.4s ease both;
   }
 
-  .tool-card:nth-child(1) { animation-delay: 0.05s; }
-  .tool-card:nth-child(2) { animation-delay: 0.1s; }
-  .tool-card:nth-child(3) { animation-delay: 0.15s; }
-  .tool-card:nth-child(4) { animation-delay: 0.2s; }
-  .tool-card:nth-child(5) { animation-delay: 0.25s; }
-  .tool-card:nth-child(6) { animation-delay: 0.3s; }
+  .tool-card:nth-child(1)  { animation-delay: 0.05s; }
+  .tool-card:nth-child(2)  { animation-delay: 0.10s; }
+  .tool-card:nth-child(3)  { animation-delay: 0.15s; }
+  .tool-card:nth-child(4)  { animation-delay: 0.20s; }
+  .tool-card:nth-child(5)  { animation-delay: 0.25s; }
+  .tool-card:nth-child(6)  { animation-delay: 0.30s; }
+  .tool-card:nth-child(7)  { animation-delay: 0.35s; }
+  .tool-card:nth-child(8)  { animation-delay: 0.40s; }
+  .tool-card:nth-child(9)  { animation-delay: 0.45s; }
+  .tool-card:nth-child(10) { animation-delay: 0.50s; }
 
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
 </head>
@@ -229,7 +233,7 @@
     <div class="header-logo">🧰</div>
     <h1>arisa-tools</h1>
     <div class="subtitle">自作ツール一覧</div>
-    <div class="count">6 tools</div>
+    <div class="count">10 tools</div>
   </div>
 
   <!-- 汎用・情報処理系 -->
@@ -254,13 +258,24 @@
         <span class="tool-version">v1.0</span>
       </div>
       <div class="tool-name">単位変換ツール</div>
-      <div class="tool-desc">長さ・角度・面積をタブ切り替えで変換（尺貫法・度分秒対応）</div>
+      <div class="tool-desc">長さ・角度・面積を測量単位（尺・間・坪など）も含めて変換する</div>
       <div class="tool-tags">
-        <span class="tag tag-general">汎用</span>
         <span class="tag tag-survey">測量</span>
+        <span class="tag tag-general">汎用</span>
       </div>
     </a>
 
+    <a class="tool-card" href="009-photo-info-lister.html">
+      <div class="tool-top">
+        <span class="tool-number">No.009</span>
+        <span class="tool-version">v1.2</span>
+      </div>
+      <div class="tool-name">写真情報リストアップツール</div>
+      <div class="tool-desc">画像をまとめてアップしてファイル名・撮影日付・時刻を一覧テキスト化する</div>
+      <div class="tool-tags">
+        <span class="tag tag-general">汎用</span>
+      </div>
+    </a>
   </div>
 
   <!-- 測量・建設業務系 -->
@@ -309,23 +324,52 @@
         <span class="tool-version">v1.0</span>
       </div>
       <div class="tool-name">座標面積計算ツール</div>
-      <div class="tool-desc">複数点の座標（X,Y）からガウスの面積公式で面積を計算する（㎡・坪・ha・a）</div>
+      <div class="tool-desc">複数点の座標(X,Y)からガウスの面積公式で面積を計算する（㎡・坪・ha・a）</div>
       <div class="tool-tags">
         <span class="tag tag-survey">測量</span>
       </div>
     </a>
 
-  </div>
+    <a class="tool-card" href="007-observation-notebook.html">
+      <div class="tool-top">
+        <span class="tool-number">No.007</span>
+        <span class="tool-version">v1.1</span>
+      </div>
+      <div class="tool-name">観測手簿補完ツール</div>
+      <div class="tool-desc">正方向（水平角・鉛直角・斜距離）を入力して反方向を自動計算、1対回を完成させる</div>
+      <div class="tool-tags">
+        <span class="tag tag-survey">測量</span>
+      </div>
+    </a>
 
-  <!--
-  <div class="category">
-    <div class="category-title">Aiaこんぶ運営系</div>
-    <div class="empty-card">準備中...</div>
+    <a class="tool-card" href="008-traverse-tolerance-checker.html">
+      <div class="tool-top">
+        <span class="tool-number">No.008</span>
+        <span class="tool-version">v1.2</span>
+      </div>
+      <div class="tool-name">基準点測量 許容値チェッカー</div>
+      <div class="tool-desc">公共測量1〜4級・街区基準点のトラバース閉合差を許容値と自動判定する</div>
+      <div class="tool-tags">
+        <span class="tag tag-survey">測量</span>
+      </div>
+    </a>
+
+    <a class="tool-card" href="010-horizontal-distance-calculator.html">
+      <div class="tool-top">
+        <span class="tool-number">No.010</span>
+        <span class="tool-version">v1.0</span>
+      </div>
+      <div class="tool-name">水平距離・高低差計算ツール</div>
+      <div class="tool-desc">TSの斜距離と天頂角から水平距離・高低差を計算する（複数件一括対応）</div>
+      <div class="tool-tags">
+        <span class="tag tag-survey">測量</span>
+      </div>
+    </a>
   </div>
-  -->
 
   <div class="footer">Powered by Aiaこんぶ ツール部</div>
 
 </div>
+
 </body>
 </html>
