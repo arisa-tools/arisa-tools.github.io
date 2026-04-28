@@ -319,7 +319,20 @@
   <div class="header">
     <div class="header-icon">📐</div>
     <h1>座標計算ツール</h1>
-    <span class="version">v1.0</span>
+    <span class="version">v1.1</span>
+
+    <!-- オプション -->
+    <div style="margin-top:12px; text-align:center;">
+      <button class="toggle-btn" id="optionToggle" onclick="toggleOption()" style="padding:5px 18px;">⚙ オプション</button>
+      <div id="optionPanel" style="display:none; margin-top:10px; display:none; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--label);">小数点桁数</span>
+        <button class="toggle-btn" id="dec-2" onclick="setDecimal(2)">2</button>
+        <button class="toggle-btn" id="dec-3" onclick="setDecimal(3)">3</button>
+        <button class="toggle-btn active" id="dec-4" onclick="setDecimal(4)">4</button>
+        <button class="toggle-btn" id="dec-5" onclick="setDecimal(5)">5</button>
+        <button class="toggle-btn" id="dec-6" onclick="setDecimal(6)">6</button>
+      </div>
+    </div>
   </div>
 
   <!-- 入力カード -->
@@ -399,6 +412,24 @@
 <script>
   let currentMode = 'dms';
   let calcResult = null;
+  let decimalPlaces = 4;
+  let optionOpen = false;
+
+  function toggleOption() {
+    optionOpen = !optionOpen;
+    const panel = document.getElementById('optionPanel');
+    const btn = document.getElementById('optionToggle');
+    panel.style.display = optionOpen ? 'flex' : 'none';
+    btn.classList.toggle('active', optionOpen);
+  }
+
+  function setDecimal(n) {
+    decimalPlaces = n;
+    [2,3,4,5,6].forEach(d => {
+      document.getElementById(`dec-${d}`).classList.toggle('active', d === n);
+    });
+    showResult();
+  }
 
   function parseNum(id) {
     const v = document.getElementById(id).value.trim();
@@ -445,16 +476,16 @@
 
     // 距離
     document.getElementById('distance').innerHTML =
-      dist.toFixed(4) + '<span class="unit">m</span>';
+      dist.toFixed(decimalPlaces) + '<span class="unit">m</span>';
 
     // 方位角
     updateAzimuth();
 
     // ΔX, ΔY
     document.getElementById('dx').innerHTML =
-      'ΔX ' + (dx >= 0 ? '+' : '') + dx.toFixed(4) + '<span class="unit">m</span>';
+      'ΔX ' + (dx >= 0 ? '+' : '') + dx.toFixed(decimalPlaces) + '<span class="unit">m</span>';
     document.getElementById('dy').innerHTML =
-      'ΔY ' + (dy >= 0 ? '+' : '') + dy.toFixed(4) + '<span class="unit">m</span>';
+      'ΔY ' + (dy >= 0 ? '+' : '') + dy.toFixed(decimalPlaces) + '<span class="unit">m</span>';
   }
 
   function updateAzimuth() {
