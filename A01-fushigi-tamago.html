@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#f5e6d3">
-<title>ふしぎたまご v1.13 | Aiaこんぶ ツール部</title>
+<title>ふしぎたまご v1.14 | Aiaこんぶ ツール部</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -931,7 +931,7 @@ body {
   <div class="header">
     <div class="header-left">
       <span class="badge">A-01</span>
-      <span class="version">v1.13</span>
+      <span class="version">v1.14</span>
     </div>
     <div class="title-area">
       <div class="title">ふしぎたまご</div>
@@ -1043,7 +1043,7 @@ body {
   <!-- オプション -->
   <!-- フッター -->
   <div class="footer">
-    Aiaこんぶ ツール部 / A-01 ふしぎたまご v1.13
+    Aiaこんぶ ツール部 / A-01 ふしぎたまご v1.14
   </div>
 </div>
 
@@ -1060,6 +1060,17 @@ body {
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="confirmCancel">キャンセル</button>
       <button class="modal-btn ok" id="confirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ルート選択モーダル -->
+<div class="modal-overlay" id="routeModal">
+  <div class="modal">
+    <div class="modal-text" id="routeModalText">このたまごは\nどっちに育てる？</div>
+    <div class="modal-buttons">
+      <button class="modal-btn" id="routeMonsterBtn" style="background:#d4a574;color:#fff;">🐾 モンスターへ</button>
+      <button class="modal-btn" id="routeBirdBtn" style="background:#7ac4a8;color:#fff;">🐦 とりへ</button>
     </div>
   </div>
 </div>
@@ -1157,7 +1168,15 @@ body {
           <label>わかもの→おとな</label>
           <input type="number" min="1" max="9999" id="evolveTeenAdult" class="evolve-input">
         </div>
-        <button class="test-btn" id="evolveResetBtn" style="margin-top:8px;width:100%">デフォルトに戻す（1分/3分/5分）</button>
+        <button class="test-btn" id="evolveResetBtn" style="margin-top:8px;width:100%">デフォルトに戻す（90秒/5分/10分）</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">💤 ねんね回復速度（たいりょく/秒）</div>
+        <div class="evolve-input-row">
+          <label>回復速度</label>
+          <input type="number" min="0.1" max="100" step="0.1" id="sleepRecoveryInput" class="evolve-input">
+        </div>
+        <button class="test-btn" id="sleepRecoveryResetBtn" style="margin-top:8px;width:100%">デフォルトに戻す（2.0）</button>
       </div>
     </div>
   </div>
@@ -1165,14 +1184,14 @@ body {
 
 <script>
 // ===========================================
-// ふしぎたまご v1.13
+// ふしぎたまご v1.14
 // 放置型育成ゲーム
 // ===========================================
 
 // ----- 設定 -----
 const SPEED_PRESETS = {
   fast:   { hunger: 30,  clean: 20,  stamina: 25, mood: 15 },  // 1時間あたりの減少量
-  normal: { hunger: 8,   clean: 5,   stamina: 6,  mood: 4  },
+  normal: { hunger: 7,   clean: 5,   stamina: 6,  mood: 4  },
   slow:   { hunger: 2,   clean: 1.2, stamina: 1.5, mood: 1 }
 };
 
@@ -1186,37 +1205,72 @@ const HATCH_PRESETS = {
 // 進化時間（秒）デフォルト値
 // state.evolveSeconds で上書き可能（デバッグ用）
 const DEFAULT_EVOLVE_SECONDS = {
-  baby_to_child:  60,   // 赤ちゃん → こども：1分
-  child_to_teen:  180,  // こども → わかもの：3分
-  teen_to_adult:  300   // わかもの → おとな：5分
+  baby_to_child:  90,   // 赤ちゃん → こども：1分30秒
+  child_to_teen:  300,  // こども → わかもの：5分
+  teen_to_adult:  600   // わかもの → おとな：10分
 };
 
 // EXPブースト倍率：1 EXP = 何秒の進化短縮になるか
-const EXP_BOOST_RATE = 5;
+const EXP_BOOST_RATE = 2;
+
+// ねんね回復速度（たいりょく/秒）デフォルト値
+const DEFAULT_SLEEP_RECOVERY = 2.0;
 
 // 成長段階
 const STAGES = {
   EGG: 0,        // たまご
-  BABY: 1,       // 赤ちゃん
+  BABY: 1,       // 赤ちゃん（共通）
+  // けもの系
   CHILD: 2,      // こども
   TEEN: 3,       // わかもの
-  ADULT: 4       // おとな
+  ADULT: 4,      // おとな
+  // とり系
+  CHICK: 5,      // ひな
+  FLEDGLING: 6,  // ひよこ
+  YOUNG_BIRD: 7, // わかどり
+  BIRD_ADULT: 8  // とりおとな
 };
 
 // 成長に必要なEXP（累計）
 const STAGE_EXP = [0, 50, 200, 500, 1000];
 
 // 成長段階の名前
-const STAGE_NAMES = ['たまご', '赤ちゃん', 'こども', 'わかもの', 'おとな'];
+const STAGE_NAMES = {
+  [0]: 'たまご',
+  [1]: '赤ちゃん',
+  [2]: 'こども',
+  [3]: 'わかもの',
+  [4]: 'おとな',
+  [5]: 'ひな',
+  [6]: 'ひよこ',
+  [7]: 'わかどり',
+  [8]: 'とりおとな'
+};
 
-// 進化分岐タイプ（おとな段階）
+// 進化分岐タイプ（けもの系おとな）
 const ADULT_TYPES = {
   POWER: 'power',     // よく鍛えた → ガオン
   CHUBBY: 'chubby',   // よく食べた → ぽよぽよ
   SMART: 'smart',     // よく勉強した → カシコネ
   HAPPY: 'happy',     // よく遊んだ → ニコモ
-  CALM: 'calm',       // よく読書/音楽 → ホワワ
+  CALM: 'calm',       // よく読書 → ホワワ
   MIX: 'mix'          // バランス型 → ミックス
+};
+
+// 進化分岐タイプ（とり系おとな）
+const BIRD_TYPES = {
+  EAGLE: 'eagle',       // トレ突出 → ワシ
+  CROW: 'crow',         // べんきょう突出 → カラス
+  PHOENIX: 'phoenix',   // バランス → ほうおう（レア）
+  ALBATROSS: 'albatross', // あそぶ突出 → アホウドリ
+  SPARROW: 'sparrow',   // ごはん突出 → すずめ
+  PARROT: 'parrot'      // どくしょ突出 → インコ
+};
+
+// ルート種別
+const ROUTE = {
+  MONSTER: 'monster',
+  BIRD: 'bird'
 };
 
 // ----- 状態 -----
@@ -1239,6 +1293,9 @@ let state = {
   totalReads: 0,
   // 進化分岐結果
   adultType: null,
+  birdType: null,
+  // ルート（monster / bird）
+  route: null,
   // 状態フラグ
   isSleeping: false,
   // たびだち累計
@@ -1248,6 +1305,8 @@ let state = {
   hatchPreset: 'normal',
   // 進化スピード（秒）デバッグ用
   evolveSeconds: { ...DEFAULT_EVOLVE_SECONDS },
+  // ねんね回復速度（デバッグ用）
+  sleepRecovery: DEFAULT_SLEEP_RECOVERY,
   // 現在の段階に入った時刻
   stageStartTime: Date.now(),
   // 現在の段階で消費したEXP（進化用）
@@ -1322,6 +1381,7 @@ function reset() {
       const keepSpeed = state.speedPreset;
       const keepHatch = state.hatchPreset;
       const keepEvolveSeconds = state.evolveSeconds || { ...DEFAULT_EVOLVE_SECONDS };
+      const keepSleepRecovery = state.sleepRecovery || DEFAULT_SLEEP_RECOVERY;
       state = {
         stage: STAGES.EGG,
         level: 1,
@@ -1344,6 +1404,7 @@ function reset() {
         speedPreset: keepSpeed, // スピード設定は維持
         hatchPreset: keepHatch,
         evolveSeconds: keepEvolveSeconds, // 進化スピード設定も維持
+        sleepRecovery: keepSleepRecovery, // ねんね回復速度も維持
         stageStartTime: Date.now(),
         stageExpSpent: 0,
         lastUpdate: Date.now(),
@@ -1381,7 +1442,7 @@ function showConfirm(text, onOk) {
 
 // ----- たびだち -----
 function travel() {
-  if (state.stage !== STAGES.ADULT) return;
+  if (state.stage !== STAGES.ADULT && state.stage !== STAGES.BIRD_ADULT) return;
   showConfirm(
     state.monsterName + ' は\nそろそろ たびだちのとき。\n\nおくりだしてあげますか？',
     () => {
@@ -1440,6 +1501,7 @@ function finishTravel() {
   const keepHatch = state.hatchPreset;
   const keepTravelCount = state.travelCount;
   const keepEvolveSeconds = state.evolveSeconds || { ...DEFAULT_EVOLVE_SECONDS };
+  const keepSleepRecovery = state.sleepRecovery || DEFAULT_SLEEP_RECOVERY;
   state = {
     stage: STAGES.EGG,
     level: 1,
@@ -1462,6 +1524,7 @@ function finishTravel() {
     speedPreset: keepSpeed,
     hatchPreset: keepHatch,
     evolveSeconds: keepEvolveSeconds,
+    sleepRecovery: keepSleepRecovery,
     stageStartTime: Date.now(),
     stageExpSpent: 0,
     lastUpdate: Date.now(),
@@ -1517,11 +1580,11 @@ function tick() {
     if (avgOthers < 30) {
       state.mood = Math.max(0, state.mood - 0.05);
     } else if (avgOthers > 70) {
-      state.mood = Math.min(100, state.mood + 0.02);
+      state.mood = Math.min(100, state.mood + 0.05);
     }
   } else {
     // 寝てる間は体力回復
-    state.stamina = Math.min(100, state.stamina + 0.5);
+    state.stamina = Math.min(100, state.stamina + (state.sleepRecovery || DEFAULT_SLEEP_RECOVERY));
     if (state.stamina >= 100) {
       state.isSleeping = false;
       showMessage('すっきり めがさめた！');
@@ -1548,13 +1611,13 @@ function feed() {
     showMessage('いま ねむっているよ…');
     return;
   }
-  if (state.hunger >= 95) {
+  if (state.hunger >= 90) {
     showMessage('もう おなかいっぱい！');
     state.mood = Math.max(0, state.mood - 5);
     render();
     return;
   }
-  state.hunger = Math.min(100, state.hunger + 30);
+  state.hunger = Math.min(100, state.hunger + 10);
   state.mood = Math.min(100, state.mood + 5);
   gainExp(5);
   state.totalFeeds++;
@@ -1587,7 +1650,7 @@ function train() {
   state.hunger = Math.max(0, state.hunger - 10);
   state.clean = Math.max(0, state.clean - 8);
   state.mood = Math.min(100, state.mood + 3);
-  gainExp(15);
+  gainExp(12);
   state.totalTrains++;
   showMessage('えいっ！ つよくなった きがする！');
   animate('training');
@@ -1598,7 +1661,7 @@ function train() {
 function clean() {
   if (state.stage === STAGES.EGG) {
     showMessage('たまごを やさしく ふいた');
-    state.clean = 100;
+    state.clean = Math.min(100, state.clean + 40);
     gainExp(2);
     render();
     save();
@@ -1607,13 +1670,13 @@ function clean() {
   if (state.isSleeping) {
     showMessage('そっと きれいに してあげた');
   }
-  if (state.clean >= 95) {
+  if (state.clean >= 90) {
     showMessage('もう ピカピカだよ！');
     return;
   }
-  state.clean = 100;
+  state.clean = Math.min(100, state.clean + 10);
   state.mood = Math.min(100, state.mood + 8);
-  gainExp(5);
+  gainExp(4);
   state.totalCleans++;
   showMessage('ピカピカ！ きもちいい！');
   render();
@@ -1631,6 +1694,7 @@ function sleep() {
   } else {
     state.isSleeping = true;
     state.totalSleeps++;
+    gainExp(3);
     showMessage('すやすや… おやすみ');
   }
   render();
@@ -1654,7 +1718,7 @@ function play() {
   }
   state.stamina = Math.max(0, state.stamina - 8);
   state.hunger = Math.max(0, state.hunger - 5);
-  state.mood = Math.min(100, state.mood + 15);
+  state.mood = Math.min(100, state.mood + 12);
   gainExp(10);
   state.totalPlays++;
   showMessage('わーい！ たのしい！');
@@ -1677,8 +1741,8 @@ function study() {
     return;
   }
   state.stamina = Math.max(0, state.stamina - 5);
-  state.mood = Math.max(0, state.mood - 2); // 勉強はちょっと疲れる
-  gainExp(12);
+  state.mood = Math.max(0, state.mood - 1); // 勉強はちょっと疲れる
+  gainExp(15);
   state.totalStudies++;
   showMessage('むむむ… べんきょうちゅう');
   animate('studying');
@@ -1696,9 +1760,8 @@ function read() {
     return;
   }
   // 読書はリラックス効果あり
-  state.mood = Math.min(100, state.mood + 8);
-  state.stamina = Math.max(0, state.stamina - 3);
-  gainExp(8);
+  state.mood = Math.min(100, state.mood + 10);
+  gainExp(10);
   state.totalReads++;
   showMessage('しずかに ほんを よんでいる…');
   animate('reading');
@@ -1708,7 +1771,7 @@ function read() {
 
 // ----- 進化判定 -----
 function hatch() {
-  // たまご段階を図鑑に登録（孵化した時点で「たまご」もゲット扱い）
+  // たまご段階を図鑑に登録
   registerPokedex('egg');
   state.stage = STAGES.BABY;
   state.exp = 0;
@@ -1717,7 +1780,13 @@ function hatch() {
   state.stageStartTime = Date.now();
   state.stageExpSpent = 0;
   registerPokedex('baby');
+  // まず進化演出
   showEvolution('うまれた！\n' + state.monsterName + ' だ！');
+  // 演出後にルート選択モーダルを表示
+  setTimeout(() => {
+    $('routeModalText').textContent = 'このたまごは\nどっちに育てる？';
+    $('routeModal').classList.add('active');
+  }, 2600);
   save();
 }
 
@@ -1733,52 +1802,86 @@ function registerPokedex(key) {
 
 function checkEvolution() {
   if (state.stage === STAGES.EGG) return;
-  if (state.stage === STAGES.ADULT) return;
+  if (state.stage === STAGES.ADULT || state.stage === STAGES.BIRD_ADULT) return;
+  // ルート未選択の赤ちゃんは進化しない
+  if (state.stage === STAGES.BABY && !state.route) return;
 
-  // 現在の段階に必要な進化時間（秒）
-  const evolveKeys = [null, 'baby_to_child', 'child_to_teen', 'teen_to_adult'];
-  const key = evolveKeys[state.stage];
+  // 進化キーマップ（けもの系・とり系共通の時間設定を使い回す）
+  const evolveKeyMap = {
+    [STAGES.BABY]:       'baby_to_child',   // 赤ちゃん→こども or ひな
+    [STAGES.CHILD]:      'child_to_teen',   // こども→わかもの
+    [STAGES.TEEN]:       'teen_to_adult',   // わかもの→おとな
+    [STAGES.CHICK]:      'baby_to_child',   // ひな→ひよこ（同じ時間）
+    [STAGES.FLEDGLING]:  'child_to_teen',   // ひよこ→わかどり
+    [STAGES.YOUNG_BIRD]: 'teen_to_adult'    // わかどり→とりおとな
+  };
+  const key = evolveKeyMap[state.stage];
   if (!key) return;
 
   const required = (state.evolveSeconds && state.evolveSeconds[key]) || DEFAULT_EVOLVE_SECONDS[key];
-
-  // 経過時間（秒）
   const elapsed = (Date.now() - (state.stageStartTime || Date.now())) / 1000;
-  // EXPブースト：現段階で得たEXP × 倍率（秒短縮）
   const expBoost = (state.stageExpSpent || 0) * EXP_BOOST_RATE;
-  // 育成ポイント（経過秒 + EXP由来の短縮秒）
   const progress = elapsed + expBoost;
 
   if (progress >= required) {
-    state.stage++;
     state.stageStartTime = Date.now();
     state.stageExpSpent = 0;
 
-    if (state.stage === STAGES.ADULT) {
-      // 進化分岐
-      determineAdultType();
-      // おとな段階は分岐タイプ別に図鑑登録
-      registerPokedex('adult_' + state.adultType);
+    if (state.route === ROUTE.BIRD) {
+      // とり系ルート
+      const birdNext = {
+        [STAGES.BABY]:       STAGES.CHICK,
+        [STAGES.CHICK]:      STAGES.FLEDGLING,
+        [STAGES.FLEDGLING]:  STAGES.YOUNG_BIRD,
+        [STAGES.YOUNG_BIRD]: STAGES.BIRD_ADULT
+      };
+      state.stage = birdNext[state.stage] || state.stage;
+      if (state.stage === STAGES.BIRD_ADULT) {
+        determineBirdType();
+        registerPokedex('bird_' + state.birdType);
+      } else {
+        const birdKeys = { [STAGES.CHICK]: 'chick', [STAGES.FLEDGLING]: 'fledgling', [STAGES.YOUNG_BIRD]: 'young_bird' };
+        if (birdKeys[state.stage]) registerPokedex(birdKeys[state.stage]);
+      }
     } else {
-      // 中間段階の図鑑登録
-      const stageKeys = ['egg', 'baby', 'child', 'teen', 'adult'];
-      registerPokedex(stageKeys[state.stage]);
+      // けもの系ルート
+      const monsterNext = {
+        [STAGES.BABY]:  STAGES.CHILD,
+        [STAGES.CHILD]: STAGES.TEEN,
+        [STAGES.TEEN]:  STAGES.ADULT
+      };
+      state.stage = monsterNext[state.stage] || state.stage;
+      if (state.stage === STAGES.ADULT) {
+        determineAdultType();
+        registerPokedex('adult_' + state.adultType);
+      } else {
+        const monsterKeys = { [STAGES.CHILD]: 'child', [STAGES.TEEN]: 'teen' };
+        if (monsterKeys[state.stage]) registerPokedex(monsterKeys[state.stage]);
+      }
     }
 
     state.level = Math.floor(state.exp / 50) + 1;
     showEvolution(STAGE_NAMES[state.stage] + ' に\n しんかした！');
     save();
   } else {
-    // レベル更新
     state.level = Math.floor(state.exp / 50) + 1;
   }
 }
 
 // 現在段階の進化進行率（0〜1）
 function getEvolveProgress() {
-  if (state.stage === STAGES.EGG || state.stage === STAGES.ADULT) return 0;
-  const evolveKeys = [null, 'baby_to_child', 'child_to_teen', 'teen_to_adult'];
-  const key = evolveKeys[state.stage];
+  if (state.stage === STAGES.EGG) return 0;
+  if (state.stage === STAGES.ADULT || state.stage === STAGES.BIRD_ADULT) return 0;
+  if (state.stage === STAGES.BABY && !state.route) return 0;
+  const evolveKeyMap = {
+    [STAGES.BABY]:       'baby_to_child',
+    [STAGES.CHILD]:      'child_to_teen',
+    [STAGES.TEEN]:       'teen_to_adult',
+    [STAGES.CHICK]:      'baby_to_child',
+    [STAGES.FLEDGLING]:  'child_to_teen',
+    [STAGES.YOUNG_BIRD]: 'teen_to_adult'
+  };
+  const key = evolveKeyMap[state.stage];
   if (!key) return 0;
   const required = (state.evolveSeconds && state.evolveSeconds[key]) || DEFAULT_EVOLVE_SECONDS[key];
   const elapsed = (Date.now() - (state.stageStartTime || Date.now())) / 1000;
@@ -1787,7 +1890,6 @@ function getEvolveProgress() {
 }
 
 function determineAdultType() {
-  // 各アクションを基準値1.0として、突出した行動からタイプ決定
   const counts = [
     { type: ADULT_TYPES.POWER,  value: state.totalTrains  },
     { type: ADULT_TYPES.CHUBBY, value: state.totalFeeds   },
@@ -1796,22 +1898,31 @@ function determineAdultType() {
     { type: ADULT_TYPES.CALM,   value: state.totalReads   }
   ];
   counts.sort((a, b) => b.value - a.value);
-
-  const total = counts.reduce((s, c) => s + c.value, 0);
-  // 行動が極端に少ない場合もミックス
-  if (total < 5) {
+  if (counts[0].value <= counts[1].value * 1.2 || counts[0].value === 0) {
     state.adultType = ADULT_TYPES.MIX;
-  }
-  // 1位が2位の1.3倍以上なら、1位のタイプ
-  else if (counts[0].value >= counts[1].value * 1.3 && counts[0].value > 0) {
-    state.adultType = counts[0].type;
   } else {
-    // バランス型
-    state.adultType = ADULT_TYPES.MIX;
+    state.adultType = counts[0].type;
   }
-
-  // 名前更新
   state.monsterName = adultName(state.adultType);
+}
+
+function determineBirdType() {
+  // とり系分岐：けもの系と同じ行動カウントで判定
+  const counts = [
+    { type: BIRD_TYPES.EAGLE,     value: state.totalTrains  },  // トレ→ワシ
+    { type: BIRD_TYPES.SPARROW,   value: state.totalFeeds   },  // ごはん→すずめ
+    { type: BIRD_TYPES.CROW,      value: state.totalStudies },  // べんきょう→カラス
+    { type: BIRD_TYPES.ALBATROSS, value: state.totalPlays   },  // あそぶ→アホウドリ
+    { type: BIRD_TYPES.PARROT,    value: state.totalReads   }   // どくしょ→インコ
+  ];
+  counts.sort((a, b) => b.value - a.value);
+  // 1位と2位が拮抗→ほうおう（レア）
+  if (counts[0].value <= counts[1].value * 1.2 || counts[0].value === 0) {
+    state.birdType = BIRD_TYPES.PHOENIX;
+  } else {
+    state.birdType = counts[0].type;
+  }
+  state.monsterName = birdName(state.birdType);
 }
 
 function randomBabyName() {
@@ -1829,6 +1940,18 @@ function adultName(type) {
     [ADULT_TYPES.MIX]:    'ミックス'
   };
   return map[type] || 'ふしぎ';
+}
+
+function birdName(type) {
+  const map = {
+    [BIRD_TYPES.EAGLE]:     'ワシ',
+    [BIRD_TYPES.CROW]:      'カラス',
+    [BIRD_TYPES.PHOENIX]:   'ほうおう',
+    [BIRD_TYPES.ALBATROSS]: 'アホウドリ',
+    [BIRD_TYPES.SPARROW]:   'すずめ',
+    [BIRD_TYPES.PARROT]:    'インコ'
+  };
+  return map[type] || 'とり';
 }
 
 // ----- アニメーション -----
@@ -1863,7 +1986,11 @@ function showMessage(text) {
 
 function getDefaultMessage() {
   if (state.stage === STAGES.EGG) {
-    return `たまご… ${Math.floor(state.hatchProgress)}%`;
+    const p = state.hatchProgress;
+    if (p < 25)  return 'なにかが はいっているよ…';
+    if (p < 50)  return 'うごいてる？ きがする…';
+    if (p < 75)  return 'ヒビが はいってきた！';
+    return 'もうすぐ うまれそう…！';
   }
   if (state.isSleeping) return 'すやすや…';
   if (state.hunger < 20) return 'おなかが すいた…';
@@ -1942,7 +2069,7 @@ function render() {
   updateCountBadge('cntPlay',  state.totalPlays);
 
   // たびだちボタン表示（おとなになったら出現）
-  $('travelBtn').style.display = (state.stage === STAGES.ADULT) ? 'flex' : 'none';
+  $('travelBtn').style.display = (state.stage === STAGES.ADULT || state.stage === STAGES.BIRD_ADULT) ? 'flex' : 'none';
 }
 
 function updateCountBadge(id, count) {
@@ -1963,10 +2090,9 @@ function updateStat(name, val) {
 // ----- モンスターSVG（差し替え可能） -----
 // ここを編集すれば見た目を差し替えられる
 function getMonsterSVG() {
-  if (state.stage === STAGES.EGG) {
-    return svgEgg(state.hatchProgress);
-  }
+  if (state.stage === STAGES.EGG) return svgEgg(state.hatchProgress);
   if (state.stage === STAGES.BABY) return svgBaby();
+  // けもの系
   if (state.stage === STAGES.CHILD) return svgChild();
   if (state.stage === STAGES.TEEN) return svgTeen();
   if (state.stage === STAGES.ADULT) {
@@ -1977,6 +2103,19 @@ function getMonsterSVG() {
     if (state.adultType === ADULT_TYPES.CALM)   return svgAdultCalm();
     if (state.adultType === ADULT_TYPES.MIX)    return svgAdultMix();
     return svgAdultHappy();
+  }
+  // とり系
+  if (state.stage === STAGES.CHICK)      return svgChick();
+  if (state.stage === STAGES.FLEDGLING)  return svgFledgling();
+  if (state.stage === STAGES.YOUNG_BIRD) return svgYoungBird();
+  if (state.stage === STAGES.BIRD_ADULT) {
+    if (state.birdType === BIRD_TYPES.EAGLE)     return svgBirdEagle();
+    if (state.birdType === BIRD_TYPES.CROW)      return svgBirdCrow();
+    if (state.birdType === BIRD_TYPES.PHOENIX)   return svgBirdPhoenix();
+    if (state.birdType === BIRD_TYPES.ALBATROSS) return svgBirdAlbatross();
+    if (state.birdType === BIRD_TYPES.SPARROW)   return svgBirdSparrow();
+    if (state.birdType === BIRD_TYPES.PARROT)    return svgBirdParrot();
+    return svgBirdSparrow();
   }
   return svgEgg(0);
 }
@@ -2000,29 +2139,74 @@ function dotGrid(grid, palette) {
   return `<svg class="monster-svg" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${cells.join('')}</svg>`;
 }
 
-// たまご
+// たまご（32×32 ドット絵）
+// パレット：1=本体（クリーム）, 2=影（薄茶）, 3=輪郭（濃茶）, 4=ハイライト（白）, 5=ヒビ（黒）, 6=模様（薄いアクセント）
 function svgEgg(progress) {
-  const palette = { '.': null, 1: '#fff5e0', 2: '#f5d090', 3: '#3a2a1a', 4: '#d4a574' };
-  let grid = [
-    '...11111...',
-    '..1111111..',
-    '.111212111.',
-    '111111111.1'.replace('.','1'),
-    '1112221111',
-    '1111111111',
-    '1112221111',
-    '1111111111',
-    '.111212111.',
-    '..1111111..'
-  ].map(s => s.padEnd(10, '.').slice(0,10).split('').map(c => c === '.' ? 0 : parseInt(c)));
+  const palette = {
+    1: '#fff8e7',  // 本体
+    2: '#f0d9a8',  // 影
+    3: '#c8a46e',  // 輪郭・縁
+    4: '#ffffff',  // ハイライト
+    5: '#3a2a1a',  // ヒビ
+    6: '#fce8c0'   // 中間色
+  };
+  const _ = 0; // 透明
+  const grid = [
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,3,3,3,3,3,3,3,3,3,3,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,3,3,1,1,1,1,1,1,1,1,1,1,3,3,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,3,1,1,1,4,4,4,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,3,1,1,1,4,4,4,4,4,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_,_,_],
+    [_,_,_,_,_,_,3,1,1,4,4,4,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_,_,_],
+    [_,_,_,_,_,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_,_],
+    [_,_,_,_,_,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_,_],
+    [_,_,_,_,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_],
+    [_,_,_,_,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_],
+    [_,_,_,_,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,_,_,_,_],
+    [_,_,_,_,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,_,_,_,_],
+    [_,_,_,_,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,_,_,_,_],
+    [_,_,_,_,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3,_,_,_,_],
+    [_,_,_,_,3,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,_,_,_,_],
+    [_,_,_,_,_,3,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,_,_,_,_,_],
+    [_,_,_,_,_,3,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3,_,_,_,_,_],
+    [_,_,_,_,_,3,2,2,2,2,2,2,1,1,1,1,1,1,1,1,2,2,2,2,2,2,3,_,_,_,_,_],
+    [_,_,_,_,_,_,3,2,2,2,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,3,_,_,_,_,_,_],
+    [_,_,_,_,_,_,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,3,3,3,2,2,2,2,2,2,2,2,3,3,3,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,3,3,3,3,3,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]
+  ];
 
-  // ヒビ（進行度に応じて）
-  if (progress > 50) {
-    grid[3][5] = 3; grid[4][6] = 3; grid[5][5] = 3;
+  // ヒビ（進行度に応じて4段階）
+  // 25%〜：小さなヒビ
+  if (progress >= 25) {
+    grid[8][15]=5; grid[9][15]=5; grid[9][16]=5;
   }
-  if (progress > 80) {
-    grid[2][4] = 3; grid[6][6] = 3; grid[7][5] = 3;
+  // 50%〜：ヒビが広がる
+  if (progress >= 50) {
+    grid[7][14]=5; grid[8][14]=5; grid[10][16]=5; grid[10][17]=5;
+    grid[11][15]=5;
   }
+  // 75%〜：大きなヒビ
+  if (progress >= 75) {
+    grid[6][13]=5; grid[7][13]=5; grid[12][14]=5; grid[12][17]=5;
+    grid[13][13]=5; grid[13][18]=5; grid[11][16]=5;
+  }
+  // 90%〜：今にも割れそう
+  if (progress >= 90) {
+    grid[5][12]=5; grid[6][12]=5; grid[14][12]=5; grid[14][19]=5;
+    grid[15][11]=5; grid[15][20]=5; grid[13][14]=5; grid[13][17]=5;
+  }
+
   return dotGrid(grid, palette);
 }
 
@@ -2077,101 +2261,103 @@ function svgBaby() {
   return dotGrid(grid, palette);
 }
 
-// こども（32×32 ドット絵）- 手足が出てきて元気な感じ
+// こども（32×32）- まんまるネコ、三角耳、大きな丸目、ほっぺぷくぷく
 function svgChild() {
   const palette = {
-    1: '#ffb87a',  // メイン色（赤ちゃんより濃いオレンジ寄り）
+    1: '#ffcba4',  // 本体（クリーム）
     2: '#3a2a1a',  // 輪郭・瞳
-    3: '#c08555',  // 影
-    4: '#ffffff',  // 白目
-    5: '#ff7a9a',  // ほっぺ
-    6: '#fff0d0',  // ハイライト
-    7: '#c44848',  // 口
-    8: '#a87545'   // 足
+    3: '#e8a87c',  // 影・耳内
+    4: '#ffffff',  // 白目・ハイライト
+    5: '#ffb0c8',  // ほっぺ
+    6: '#ff6b8a',  // 口
+    7: '#ffeedd',  // 腹部ライト
+    8: '#c48a5a'   // 足・しっぽ
   };
+  const _ = 0;
   const grid = [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,2,2,2,1,1,1,1,2,2,2,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,2,1,1,1,6,6,1,1,6,6,1,1,1,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,2,1,1,6,6,6,6,1,1,6,6,6,6,1,1,2,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,4,4,2,2,1,1,1,1,2,2,4,4,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,4,4,2,2,2,2,1,1,2,2,2,2,4,4,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,4,2,2,4,4,2,1,1,2,4,4,2,2,4,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,4,4,4,4,4,1,1,1,1,4,4,4,4,4,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,4,4,4,1,1,1,1,1,1,4,4,4,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,5,5,1,1,1,1,1,1,1,1,1,1,5,5,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,5,5,5,5,1,2,2,2,2,2,2,1,5,5,5,5,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,5,5,5,1,2,7,7,7,7,7,7,2,1,5,5,5,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,5,1,1,2,7,7,7,7,7,7,2,1,1,5,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,1,1,1,2,2,2,2,2,2,1,1,1,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,0,0,0,0,0],
-    [0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0],
-    [0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0],
-    [0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0],
-    [0,0,0,0,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,2,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,2,8,8,8,2,0,0,0,0,2,8,8,8,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,2,8,8,8,2,0,0,0,0,2,8,8,8,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,2,_,_,_,_,_,_,_,2,2,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,2,_,_,_,_,_,2,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,3,3,1,1,2,_,_,_,2,1,1,3,3,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,3,1,1,1,2,2,2,2,2,1,1,1,3,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,2,2,2,1,1,1,1,1,1,1,1,2,2,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,7,7,7,7,7,7,7,7,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,7,7,7,7,7,7,7,7,7,7,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,4,2,2,1,1,1,1,2,2,4,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,4,2,4,2,1,1,1,1,2,4,2,4,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,4,4,2,1,1,1,1,1,1,2,4,4,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,5,5,1,1,1,1,1,1,1,1,1,1,1,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,5,5,5,1,1,1,1,1,1,1,1,1,5,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,2,6,6,6,6,2,1,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,2,6,6,6,6,6,6,2,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,2,2,2,2,2,2,1,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,1,1,1,1,1,1,1,1,2,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,8,8,2,_,_,_,2,8,8,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,8,8,2,_,_,_,2,8,8,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,8,8,2,_,_,_,2,8,8,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,2,2,_,_,_,_,_,2,2,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]
   ];
   return dotGrid(grid, palette);
 }
 
-// わかもの（32×32 ドット絵）- 少しシュッとして耳・しっぽが生えてきた
+// わかもの（32×32）- すらっとしたネコ、はっきり耳、しっぽ、表情キリッと
 function svgTeen() {
   const palette = {
-    1: '#ff7a4a',  // メイン色
+    1: '#ffb87a',  // 本体
     2: '#3a2a1a',  // 輪郭・瞳
-    3: '#a83820',  // 影
-    4: '#ffffff',  // 白目
-    5: '#ff5a8a',  // ほっぺ
-    6: '#ffe0c0',  // ハイライト
-    7: '#c44848',  // 口
-    8: '#7a2010',  // しっぽ・足の暗め
-    9: '#ffd700'   // 模様の黄色
+    3: '#d4884a',  // 影・耳内
+    4: '#ffffff',  // 白目・ハイライト
+    5: '#ff9ab0',  // ほっぺ
+    6: '#e05070',  // 口
+    7: '#ffeedd',  // 腹部ライト
+    8: '#a86030',  // 足・しっぽ
+    9: '#ffd700'   // 模様
   };
+  const _ = 0;
   const grid = [
-    [0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,2,1,1,1,2,0,0,0,2,1,1,1,2,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,2,1,1,1,1,1,2,0,2,1,1,1,1,1,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,2,1,1,9,9,1,1,2,1,1,9,9,1,1,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,2,2,1,1,1,1,1,1,1,1,1,1,1,2,2,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,2,1,1,1,1,1,6,1,1,1,1,1,2,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,2,1,1,1,1,6,6,6,6,1,1,1,1,1,2,2,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,1,4,4,2,2,1,1,1,1,2,2,4,4,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,4,4,2,2,2,2,1,1,2,2,2,2,4,4,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,4,2,2,2,2,2,1,1,2,2,2,2,2,4,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,4,4,2,4,4,2,1,1,2,4,4,2,4,4,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,1,4,4,4,4,1,1,1,1,4,4,4,4,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,5,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,5,5,5,1,1,1,1,2,2,2,2,1,1,1,5,5,5,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,5,5,1,1,1,1,2,7,7,7,7,2,1,1,1,5,5,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,1,1,1,1,2,7,7,7,7,2,1,1,1,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,9,9,1,1,1,2,2,2,2,1,1,1,9,9,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,9,9,9,9,1,1,1,1,1,1,1,1,9,9,9,9,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,9,9,9,9,1,1,1,1,1,1,1,1,9,9,9,9,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,9,9,1,1,1,1,1,1,1,1,1,1,9,9,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,0,0,2,2,0,0,0],
-    [0,0,0,0,0,0,0,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,0,0,2,1,1,2,0,0],
-    [0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,2,1,8,8,1,2,0],
-    [0,0,0,0,0,0,0,0,0,2,8,8,2,0,0,0,0,0,0,2,8,8,2,0,0,2,8,8,2,2,0,0],
-    [0,0,0,0,0,0,0,0,0,2,8,8,2,0,0,0,0,0,0,2,8,8,2,0,2,8,2,2,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,2,8,8,2,0,0,0,0,0,0,2,8,8,2,0,2,2,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,2,_,_,_,_,_,_,_,_,2,2,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,3,1,2,_,_,_,_,_,_,2,1,3,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,3,3,1,1,2,_,_,_,_,2,1,1,3,3,1,2,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,2,2,1,1,1,2,2,2,2,2,2,1,1,1,2,2,2,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,4,1,1,1,1,1,1,4,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,7,7,7,7,7,7,7,7,7,7,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,4,2,2,1,1,2,2,4,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,4,2,4,2,1,1,2,4,2,4,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,4,4,2,1,1,1,1,2,4,4,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,5,5,1,1,1,1,1,1,1,1,1,1,1,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,5,5,5,1,1,2,6,6,6,6,2,1,5,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,5,1,1,2,6,6,6,6,6,6,2,1,5,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,2,2,2,2,2,2,1,1,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,9,9,1,1,1,1,1,1,1,9,9,1,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,9,9,9,9,1,1,1,1,1,9,9,9,9,1,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,1,1,1,1,1,1,1,1,2,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,8,8,2,_,_,_,_,2,8,8,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,8,8,2,_,_,_,_,2,8,8,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,8,8,2,_,_,_,_,2,8,8,2,_,_,_,2,2,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,2,_,_,_,_,_,_,2,2,_,_,_,2,8,8,2,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,2,8,8,8,1,2,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,2,8,8,2,2,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,2,2,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]
   ];
   return dotGrid(grid, palette);
 }
@@ -2284,12 +2470,273 @@ function svgAdultMix() {
   return dotGrid(grid, palette);
 }
 
+// ===========================================
+// とり系ドット絵
+// ===========================================
+
+// ひな（32×32）- まんまる、くちばし小さい、目がぱっちり、ふわふわ感
+function svgChick() {
+  const palette = {
+    1: '#fff9c4',  // 本体（淡い黄）
+    2: '#3a2a1a',  // 輪郭・瞳
+    3: '#ff8f00',  // くちばし
+    4: '#ffffff',  // 白目・ハイライト
+    5: '#ffcc02',  // 産毛の黄色
+    6: '#ffb0c8'   // ほっぺ
+  };
+  const _ = 0;
+  const grid = [
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,5,5,1,1,1,1,5,5,2,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,5,5,1,1,4,1,1,1,5,5,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,4,2,2,1,1,1,2,2,4,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,4,2,4,2,1,1,1,2,4,2,4,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,4,4,2,1,1,1,1,1,2,4,4,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,6,6,1,1,3,3,3,3,1,1,6,6,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,6,6,1,1,1,1,1,1,1,1,6,6,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,2,1,1,1,1,1,1,2,2,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,3,3,_,_,_,_,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,3,3,3,_,_,_,_,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// ひよこ（32×32）- 少し大きく、小さな翼のふくらみ、にっこり口
+function svgFledgling() {
+  const palette = {
+    1: '#fff176',  // 本体（少し濃い黄）
+    2: '#3a2a1a',  // 輪郭・瞳
+    3: '#ff8f00',  // くちばし・足
+    4: '#ffffff',  // 白目・ハイライト
+    5: '#ffd54f',  // 羽の色
+    6: '#ffb0c8',  // ほっぺ
+    7: '#ff6b8a'   // 口（笑顔）
+  };
+  const _ = 0;
+  const grid = [
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,3,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,3,3,3,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,4,4,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,4,2,2,1,1,1,1,2,2,4,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,4,2,4,2,1,1,1,1,2,4,2,4,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,4,4,2,1,1,1,1,1,1,2,4,4,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,6,6,1,1,1,2,7,7,7,2,1,1,6,6,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,6,6,1,1,2,7,7,7,7,7,2,1,6,6,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,2,2,2,2,2,1,1,1,1,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,2,1,1,1,1,1,1,2,2,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,2,2,2,_,_,_,_,_,_,_,_,_,_,_,2,2,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,2,5,5,5,2,_,_,_,3,3,_,_,3,3,_,2,5,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,2,5,5,2,_,_,_,3,3,3,_,_,3,3,3,_,2,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_,_,2,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// わかどり（32×32）- 翼が広がり始め、凛々しい顔立ち、羽の色に深みが出る
+function svgYoungBird() {
+  const palette = {
+    1: '#ffca28',  // 本体（濃い黄）
+    2: '#3a2a1a',  // 輪郭・瞳
+    3: '#e65100',  // くちばし（鋭め）・足
+    4: '#ffffff',  // 白目・ハイライト
+    5: '#ffa000',  // 羽の色（濃いめ）
+    6: '#ffb0c8',  // ほっぺ
+    7: '#ff6b8a',  // 口
+    8: '#fff9c4'   // 腹部ライト
+  };
+  const _ = 0;
+  const grid = [
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,3,3,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,3,3,3,3,3,3,3,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,4,4,1,1,1,1,8,8,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,8,8,8,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,4,2,2,1,1,1,1,2,2,4,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,4,2,4,2,1,1,1,1,2,4,2,4,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,4,4,2,1,1,1,1,1,1,2,4,4,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,6,6,1,1,1,2,7,7,7,2,1,1,6,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,6,1,1,1,2,7,7,7,7,7,2,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,2,1,1,1,1,1,2,2,2,2,2,1,1,1,2,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,2,1,1,1,1,1,1,1,1,1,1,1,2,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,2,2,2,2,2,2,2,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,2,2,2,2,_,_,_,_,_,_,_,_,_,_,_,2,2,2,2,_,_,_,_,_,_,_,_,_],
+    [_,_,_,2,5,5,5,5,2,_,_,_,_,_,_,_,_,_,2,5,5,5,5,2,_,_,_,_,_,_,_,_],
+    [_,_,2,5,5,5,5,5,5,2,_,3,3,_,_,3,3,_,2,5,5,5,5,5,2,_,_,_,_,_,_,_],
+    [_,_,2,5,5,5,5,2,2,_,3,3,3,_,_,3,3,3,_,2,2,5,5,5,5,2,_,_,_,_,_,_],
+    [_,_,_,2,5,5,2,_,_,_,_,_,_,_,_,_,_,_,_,_,_,2,5,5,2,_,_,_,_,_,_,_],
+    [_,_,_,_,2,2,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,2,2,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// おとな鳥：ワシ - 茶色・鋭い目・大きな翼
+function svgBirdEagle() {
+  const palette = { 1: '#8d6e63', 2: '#3a2a1a', 3: '#fff8e1', 4: '#ffb300', 5: '#fff', 6: '#5d4037' };
+  const grid = [
+    [0,0,2,1,1,1,1,2,0,0],
+    [0,2,1,1,1,1,1,1,2,0],
+    [2,1,1,3,3,1,1,1,1,2],
+    [1,1,3,2,1,3,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1],
+    [2,1,1,4,2,2,4,1,1,2],
+    [1,1,1,4,4,4,4,1,1,1],
+    [1,6,6,1,1,1,1,6,6,1],
+    [6,6,6,6,1,1,6,6,6,6],
+    [0,4,4,0,0,0,0,4,4,0]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// おとな鳥：カラス - 黒・紫光沢・賢そうな目
+function svgBirdCrow() {
+  const palette = { 1: '#37474f', 2: '#1a1a2e', 3: '#7c4dff', 4: '#fff', 5: '#b0bec5', 6: '#263238' };
+  const grid = [
+    [0,0,2,1,1,1,1,2,0,0],
+    [0,2,1,3,1,1,3,1,2,0],
+    [2,1,1,1,1,1,1,1,1,2],
+    [1,1,1,4,2,2,4,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1],
+    [2,1,1,1,5,5,1,1,1,2],
+    [6,1,1,1,1,1,1,1,1,6],
+    [6,6,1,1,1,1,1,1,6,6],
+    [6,6,6,6,1,1,6,6,6,6],
+    [0,2,2,0,0,0,0,2,2,0]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// おとな鳥：ほうおう - 赤・金・炎の翼（レア）
+function svgBirdPhoenix() {
+  const palette = { 1: '#ef5350', 2: '#3a2a1a', 3: '#ffd700', 4: '#fff', 5: '#ff8f00', 6: '#b71c1c', 7: '#ffeb3b' };
+  const grid = [
+    [0,3,7,1,1,1,1,7,3,0],
+    [3,7,1,1,1,1,1,1,7,3],
+    [7,1,1,4,1,1,4,1,1,7],
+    [1,1,1,1,2,2,1,1,1,1],
+    [3,1,4,2,1,1,2,4,1,3],
+    [5,1,1,1,3,3,1,1,1,5],
+    [5,5,1,3,3,3,3,1,5,5],
+    [6,5,5,5,1,1,5,5,5,6],
+    [6,6,5,3,3,3,3,5,6,6],
+    [0,7,7,7,0,0,7,7,7,0]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// おとな鳥：アホウドリ - 白・のんびり・大きな翼
+function svgBirdAlbatross() {
+  const palette = { 1: '#eceff1', 2: '#3a2a1a', 3: '#ffa726', 4: '#90a4ae', 5: '#fff', 6: '#b0bec5' };
+  const grid = [
+    [0,0,1,1,1,1,1,1,0,0],
+    [0,1,1,1,5,1,1,1,1,0],
+    [1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,2,1,1,2,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1],
+    [4,1,1,3,3,3,3,1,1,4],
+    [4,4,1,1,1,1,1,1,4,4],
+    [4,4,4,1,1,1,1,4,4,4],
+    [4,4,4,4,1,1,4,4,4,4],
+    [0,6,6,0,0,0,0,6,6,0]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// おとな鳥：すずめ - 茶・白・ちょこんとかわいい
+function svgBirdSparrow() {
+  const palette = { 1: '#a1887f', 2: '#3a2a1a', 3: '#fff8e1', 4: '#ff8a65', 5: '#fff', 6: '#6d4c41' };
+  const grid = [
+    [0,0,0,2,1,1,2,0,0,0],
+    [0,0,2,1,1,1,1,2,0,0],
+    [0,2,1,3,1,1,3,1,2,0],
+    [2,1,1,1,2,2,1,1,1,2],
+    [1,1,1,1,1,1,1,1,1,1],
+    [1,3,1,4,4,4,4,1,3,1],
+    [1,1,6,1,1,1,1,6,1,1],
+    [0,6,6,6,1,1,6,6,6,0],
+    [0,0,4,4,0,0,4,4,0,0],
+    [0,0,4,0,0,0,0,4,0,0]
+  ];
+  return dotGrid(grid, palette);
+}
+
+// おとな鳥：インコ - 緑・カラフル・おしゃべりそう
+function svgBirdParrot() {
+  const palette = { 1: '#66bb6a', 2: '#3a2a1a', 3: '#ffd54f', 4: '#ef5350', 5: '#fff', 6: '#2e7d32', 7: '#1565c0' };
+  const grid = [
+    [0,0,3,1,1,1,1,3,0,0],
+    [0,3,1,1,1,1,1,1,3,0],
+    [3,1,1,5,1,1,5,1,1,3],
+    [1,1,1,1,2,2,1,1,1,1],
+    [1,1,1,4,1,1,4,1,1,1],
+    [7,1,1,1,3,3,1,1,1,7],
+    [7,7,6,1,1,1,1,6,7,7],
+    [0,7,6,6,1,1,6,6,7,0],
+    [0,0,3,3,0,0,3,3,0,0],
+    [0,0,3,0,0,0,0,3,0,0]
+  ];
+  return dotGrid(grid, palette);
+}
+
 // ----- 図鑑 -----
 const POKEDEX_DATA = [
-  { key: 'egg',   name: 'たまご',   stage: 'egg',   svgFn: () => svgEgg(0) },
-  { key: 'baby',  name: '赤ちゃん', stage: 'baby',  svgFn: svgBaby },
-  { key: 'child', name: 'こども',   stage: 'child', svgFn: svgChild },
-  { key: 'teen',  name: 'わかもの', stage: 'teen',  svgFn: svgTeen }
+  { key: 'egg',   name: 'たまご',   svgFn: () => svgEgg(0) },
+  { key: 'baby',  name: '赤ちゃん', svgFn: svgBaby }
+];
+const POKEDEX_MONSTERS = [
+  { key: 'child',        name: 'こども',   svgFn: svgChild },
+  { key: 'teen',         name: 'わかもの', svgFn: svgTeen }
 ];
 const POKEDEX_ADULTS = [
   { key: 'adult_power',  name: 'ガオン',     svgFn: svgAdultPower,  hint: '💪 トレを いちばん おおく' },
@@ -2297,16 +2744,28 @@ const POKEDEX_ADULTS = [
   { key: 'adult_smart',  name: 'カシコネ',   svgFn: svgAdultSmart,  hint: '📚 べんきょうを いちばん おおく' },
   { key: 'adult_happy',  name: 'ニコモ',     svgFn: svgAdultHappy,  hint: '🎮 あそぶを いちばん おおく' },
   { key: 'adult_calm',   name: 'ホワワ',     svgFn: svgAdultCalm,   hint: '📖 どくしょを いちばん おおく' },
-  { key: 'adult_mix',    name: 'ミックス',   svgFn: svgAdultMix,    hint: 'いろいろ バランスよく' }
+  { key: 'adult_mix',    name: 'ミックス',   svgFn: svgAdultMix,    hint: '✨ すべての行動を まんべんなく' }
+];
+const POKEDEX_BIRDS_MID = [
+  { key: 'chick',      name: 'ひな',     svgFn: svgChick },
+  { key: 'fledgling',  name: 'ひよこ',   svgFn: svgFledgling },
+  { key: 'young_bird', name: 'わかどり', svgFn: svgYoungBird }
+];
+const POKEDEX_BIRDS = [
+  { key: 'bird_eagle',     name: 'ワシ',       svgFn: svgBirdEagle,     hint: '💪 トレを いちばん おおく' },
+  { key: 'bird_sparrow',   name: 'すずめ',     svgFn: svgBirdSparrow,   hint: '🍖 ごはんを いちばん おおく' },
+  { key: 'bird_crow',      name: 'カラス',     svgFn: svgBirdCrow,      hint: '📚 べんきょうを いちばん おおく' },
+  { key: 'bird_albatross', name: 'アホウドリ', svgFn: svgBirdAlbatross, hint: '🎮 あそぶを いちばん おおく' },
+  { key: 'bird_parrot',    name: 'インコ',     svgFn: svgBirdParrot,    hint: '📖 どくしょを いちばん おおく' },
+  { key: 'bird_phoenix',   name: 'ほうおう',   svgFn: svgBirdPhoenix,   hint: '✨ すべての行動を まんべんなく' }
 ];
 
 function renderPokedex() {
   const pdx = state.pokedex || {};
-  const allEntries = [...POKEDEX_DATA, ...POKEDEX_ADULTS];
+  const allEntries = [...POKEDEX_DATA, ...POKEDEX_MONSTERS, ...POKEDEX_ADULTS, ...POKEDEX_BIRDS_MID, ...POKEDEX_BIRDS];
   const gotCount = allEntries.filter(e => pdx[e.key]).length;
   $('pokedexProgress').textContent = `${gotCount} / ${allEntries.length}`;
 
-  // たびだち累計
   const travelEl = $('pokedexTravelCount');
   if (state.travelCount && state.travelCount > 0) {
     travelEl.textContent = `🌟 そだてた数：${state.travelCount}`;
@@ -2318,37 +2777,69 @@ function renderPokedex() {
   const body = $('pokedexBody');
   body.innerHTML = '';
 
-  // 進化ツリー（横一列）
-  const treeSection = document.createElement('div');
-  treeSection.className = 'pokedex-section';
-  treeSection.innerHTML = '<div class="pokedex-section-title">🌱 せいちょう</div>';
-
-  const treeRow = document.createElement('div');
-  treeRow.className = 'pokedex-row';
-
+  // 共通（たまご・赤ちゃん）
+  const commonSection = document.createElement('div');
+  commonSection.className = 'pokedex-section';
+  commonSection.innerHTML = '<div class="pokedex-section-title">🥚 きょうつう</div>';
+  const commonRow = document.createElement('div');
+  commonRow.className = 'pokedex-row';
   POKEDEX_DATA.forEach((entry, idx) => {
-    treeRow.appendChild(makeCard(entry, pdx[entry.key]));
+    commonRow.appendChild(makeCard(entry, pdx[entry.key]));
     if (idx < POKEDEX_DATA.length - 1) {
       const arrow = document.createElement('div');
       arrow.className = 'pokedex-arrow';
       arrow.textContent = '▶';
-      treeRow.appendChild(arrow);
+      commonRow.appendChild(arrow);
     }
   });
-  treeSection.appendChild(treeRow);
-  body.appendChild(treeSection);
+  commonSection.appendChild(commonRow);
+  body.appendChild(commonSection);
 
-  // おとな分岐
-  const adultSection = document.createElement('div');
-  adultSection.className = 'pokedex-section';
-  adultSection.innerHTML = '<div class="pokedex-section-title">✨ おとな（しんかぶんき）</div>';
+  // けもの系成長
+  const monsterSection = document.createElement('div');
+  monsterSection.className = 'pokedex-section';
+  monsterSection.innerHTML = '<div class="pokedex-section-title">🐾 けものルート</div>';
+  const monsterRow = document.createElement('div');
+  monsterRow.className = 'pokedex-row';
+  POKEDEX_MONSTERS.forEach((entry, idx) => {
+    monsterRow.appendChild(makeCard(entry, pdx[entry.key]));
+    if (idx < POKEDEX_MONSTERS.length - 1) {
+      const arrow = document.createElement('div');
+      arrow.className = 'pokedex-arrow';
+      arrow.textContent = '▶';
+      monsterRow.appendChild(arrow);
+    }
+  });
+  monsterSection.appendChild(monsterRow);
   const adultRow = document.createElement('div');
   adultRow.className = 'pokedex-branch-row';
-  POKEDEX_ADULTS.forEach(entry => {
-    adultRow.appendChild(makeCard(entry, pdx[entry.key]));
+  adultRow.style.marginTop = '8px';
+  POKEDEX_ADULTS.forEach(entry => adultRow.appendChild(makeCard(entry, pdx[entry.key])));
+  monsterSection.appendChild(adultRow);
+  body.appendChild(monsterSection);
+
+  // とり系成長
+  const birdSection = document.createElement('div');
+  birdSection.className = 'pokedex-section';
+  birdSection.innerHTML = '<div class="pokedex-section-title">🐦 とりルート</div>';
+  const birdMidRow = document.createElement('div');
+  birdMidRow.className = 'pokedex-row';
+  POKEDEX_BIRDS_MID.forEach((entry, idx) => {
+    birdMidRow.appendChild(makeCard(entry, pdx[entry.key]));
+    if (idx < POKEDEX_BIRDS_MID.length - 1) {
+      const arrow = document.createElement('div');
+      arrow.className = 'pokedex-arrow';
+      arrow.textContent = '▶';
+      birdMidRow.appendChild(arrow);
+    }
   });
-  adultSection.appendChild(adultRow);
-  body.appendChild(adultSection);
+  birdSection.appendChild(birdMidRow);
+  const birdAdultRow = document.createElement('div');
+  birdAdultRow.className = 'pokedex-branch-row';
+  birdAdultRow.style.marginTop = '8px';
+  POKEDEX_BIRDS.forEach(entry => birdAdultRow.appendChild(makeCard(entry, pdx[entry.key])));
+  birdSection.appendChild(birdAdultRow);
+  body.appendChild(birdSection);
 }
 
 function makeCard(entry, gotData) {
@@ -2454,6 +2945,22 @@ $('resetBtn').addEventListener('click', reset);
 $('travelBtn').addEventListener('click', travel);
 $('travelNextBtn').addEventListener('click', finishTravel);
 
+// ルート選択
+$('routeMonsterBtn').addEventListener('click', () => {
+  state.route = ROUTE.MONSTER;
+  $('routeModal').classList.remove('active');
+  showMessage('モンスターへの みちを あるく！');
+  save();
+  render();
+});
+$('routeBirdBtn').addEventListener('click', () => {
+  state.route = ROUTE.BIRD;
+  $('routeModal').classList.remove('active');
+  showMessage('とりへの みちを とびだす！');
+  save();
+  render();
+});
+
 // テスト用ボタン
 $('healBtn').addEventListener('click', () => {
   state.hunger = 100;
@@ -2509,6 +3016,23 @@ $('evolveResetBtn').addEventListener('click', () => {
   save();
 });
 
+// ねんね回復速度（デバッグ用）
+const sleepInput = $('sleepRecoveryInput');
+sleepInput.value = state.sleepRecovery || DEFAULT_SLEEP_RECOVERY;
+sleepInput.addEventListener('change', () => {
+  const v = parseFloat(sleepInput.value);
+  if (isNaN(v) || v < 0.1) { sleepInput.value = DEFAULT_SLEEP_RECOVERY; return; }
+  state.sleepRecovery = v;
+  save();
+  showMessage('🧪 ねんね回復速度を変更');
+});
+$('sleepRecoveryResetBtn').addEventListener('click', () => {
+  state.sleepRecovery = DEFAULT_SLEEP_RECOVERY;
+  sleepInput.value = DEFAULT_SLEEP_RECOVERY;
+  showMessage('🧪 ねんね回復速度をリセット');
+  save();
+});
+
 // 全データクリア（図鑑含む完全初期化）
 $('wipeAllBtn').addEventListener('click', () => {
   showConfirm(
@@ -2543,6 +3067,7 @@ $('wipeAllBtn').addEventListener('click', () => {
         speedPreset: 'normal',
         hatchPreset: 'normal',
         evolveSeconds: { ...DEFAULT_EVOLVE_SECONDS },
+        sleepRecovery: DEFAULT_SLEEP_RECOVERY,
         stageStartTime: Date.now(),
         stageExpSpent: 0,
         lastUpdate: Date.now(),
@@ -2562,6 +3087,7 @@ $('wipeAllBtn').addEventListener('click', () => {
       $('evolveBabyChild').value = DEFAULT_EVOLVE_SECONDS.baby_to_child;
       $('evolveChildTeen').value = DEFAULT_EVOLVE_SECONDS.child_to_teen;
       $('evolveTeenAdult').value = DEFAULT_EVOLVE_SECONDS.teen_to_adult;
+      $('sleepRecoveryInput').value = DEFAULT_SLEEP_RECOVERY;
       showMessage('🧪 全データを消去しました');
       render();
       save();
