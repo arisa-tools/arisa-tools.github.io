@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Note記事チェッカー v1.0 | arisa-tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74, 158, 255, 0.12);
+    --green: #34d399;
+    --green-glow: rgba(52, 211, 153, 0.12);
+    --orange: #fb923c;
+    --orange-glow: rgba(251, 146, 60, 0.12);
+    --purple: #a78bfa;
+    --purple-glow: rgba(167, 139, 250, 0.12);
+    --yellow: #fbbf24;
+    --yellow-glow: rgba(251, 191, 36, 0.12);
+    --red: #f87171;
+    --red-glow: rgba(248, 113, 113, 0.12);
+    --text: #e8eaf0;
+    --text-dim: #8a8fa8;
+    --label: #6b7194;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  /* ヘッダー */
+  .header { text-align: center; margin-bottom: 24px; padding-top: 12px; }
+  .header-icon { font-size: 28px; margin-bottom: 6px; }
+  .header h1 { font-size: 20px; font-weight: 900; }
+  .header .back-link {
+    display: inline-block; margin-top: 8px;
+    font-size: 12px; color: var(--text-dim); text-decoration: none;
+  }
+  .header .back-link:hover { color: var(--accent); }
+  .version {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--accent); background: var(--accent-glow);
+    padding: 2px 10px; border-radius: 20px; display: inline-block; margin-top: 6px;
+  }
+
+  /* テキストエリアセクション */
+  .input-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .input-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 220px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 12px 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus {
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder {
+    color: var(--label);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    padding: 9px 22px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { opacity: 0.85; }
+
+  .btn-clear {
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-clear:hover { color: var(--text); border-color: var(--text-dim); }
+
+  /* スタッツグリッド */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 520px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card.highlight-blue  { border-color: var(--accent); }
+  .stat-card.highlight-green { border-color: var(--green); }
+  .stat-card.highlight-orange { border-color: var(--orange); }
+  .stat-card.highlight-purple { border-color: var(--purple); }
+  .stat-card.highlight-yellow { border-color: var(--yellow); }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--label);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-value.blue   { color: var(--accent); }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-value.purple { color: var(--purple); }
+  .stat-value.yellow { color: var(--yellow); }
+
+  .stat-unit {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+
+  .stat-hint {
+    font-size: 10px;
+    color: var(--label);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+
+  .hint-ok    { color: var(--green); }
+  .hint-warn  { color: var(--yellow); }
+  .hint-info  { color: var(--accent); }
+
+  /* 目安ガイド */
+  .guide-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+
+  .guide-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  .guide-bar-wrap {
+    margin-bottom: 10px;
+  }
+
+  .guide-bar-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .guide-bar-label .current-pos {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 1px 7px;
+    border-radius: 4px;
+  }
+
+  .guide-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface2);
+    position: relative;
+  }
+
+  .guide-seg {
+    height: 100%;
+    transition: width 0.3s;
+  }
+
+  .seg-short   { background: var(--text-dim); }
+  .seg-std     { background: var(--green); }
+  .seg-long    { background: var(--orange); }
+  .seg-epic    { background: var(--purple); }
+
+  .guide-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .guide-hashtag-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    line-height: 1.6;
+  }
+
+  /* ハッシュタグセクション */
+  .hashtag-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+
+  .hashtag-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hashtag-count-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--purple);
+    background: var(--purple-glow);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .hashtag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 30px;
+  }
+
+  .hashtag-badge {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--purple);
+    background: var(--purple-glow);
+    border: 1px solid rgba(167, 139, 250, 0.25);
+    padding: 4px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    user-select: none;
+  }
+
+  .hashtag-badge:hover {
+    background: rgba(167, 139, 250, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .hashtag-badge:active { transform: scale(0.96); }
+
+  .hashtag-empty {
+    font-size: 12px;
+    color: var(--label);
+    padding: 4px 0;
+  }
+
+  /* コピートースト */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--surface2);
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 30px;
+    transition: transform 0.25s, opacity 0.25s;
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* フッター */
+  .footer {
+    text-align: center;
+    padding: 20px 0 10px;
+    font-size: 11px;
+    color: var(--label);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-icon">📝</div>
+    <h1>Note記事チェッカー</h1>
+    <div class="version">v1.0</div>
+    <br>
+    <a class="back-link" href="index.html">← ツール一覧に戻る</a>
+  </div>
+
+  <!-- テキストエリア -->
+  <div class="input-section">
+    <div class="input-label">記事本文をここにペースト</div>
+    <textarea id="articleText" placeholder="Noteの記事本文をペーストしてください。入力するとリアルタイムで集計します。&#10;&#10;ハッシュタグは末尾にまとめて書いてください。&#10;例）#Note #ライティング #副業"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-clear" onclick="clearAll()">クリア</button>
+    </div>
+  </div>
+
+  <!-- スタッツカード -->
+  <div class="stats-grid">
+
+    <div class="stat-card" id="card-total">
+      <div class="stat-label">文字数（全体）</div>
+      <div class="stat-value blue" id="val-total">0<span class="stat-unit">字</span></div>
+      <div class="stat-hint" id="hint-total">—</div>
+    </div>
+
+    <div class="stat-card" id="card-nospace">
+      <div class="stat-label">文字数（空白除く）</div>
+      <div class="stat-value green" id="val-nospace">0<span class="stat-unit">字</span></div>
+      <div class="stat-hint">スペース・改行を除く</div>
+    </div>
+
+    <div class="stat-card" id="card-time">
+      <div class="stat-label">読了時間の目安</div>
+      <div class="stat-value orange" id="val-time">—</div>
+      <div class="stat-hint">400字／分で計算</div>
+    </div>
+
+    <div class="stat-card" id="card-lines">
+      <div class="stat-label">行数</div>
+      <div class="stat-value purple" id="val-lines">0<span class="stat-unit">行</span></div>
+      <div class="stat-hint">改行の数</div>
+    </div>
+
+    <div class="stat-card" id="card-tags">
+      <div class="stat-label">ハッシュタグ数</div>
+      <div class="stat-value yellow" id="val-tags">0<span class="stat-unit">個</span></div>
+      <div class="stat-hint" id="hint-tags">Noteの推奨：3〜5個</div>
+    </div>
+
+  </div>
+
+  <!-- 文字数目安ガイド -->
+  <div class="guide-section">
+    <div class="guide-title">文字数 目安ガイド</div>
+    <div class="guide-bar-wrap">
+      <div class="guide-bar-label">
+        現在の文字数（空白除く）
+        <span class="current-pos" id="guide-current">0字</span>
+      </div>
+      <div class="guide-bar" id="guide-bar">
+        <div class="guide-seg seg-short"  id="seg-short"  style="width:0%"></div>
+        <div class="guide-seg seg-std"    id="seg-std"    style="width:0%"></div>
+        <div class="guide-seg seg-long"   id="seg-long"   style="width:0%"></div>
+        <div class="guide-seg seg-epic"   id="seg-epic"   style="width:0%"></div>
+      </div>
+      <div class="guide-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--text-dim)"></div>〜800字：短め無料記事</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>800〜3,000字：標準的な無料記事</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>3,000〜6,000字：長め・有料記事向け</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>6,000字〜：連載・大作向け</div>
+      </div>
+    </div>
+    <div class="guide-hashtag-note" id="guide-hashtag-note">
+      ハッシュタグ：Noteでは <strong>3〜5個</strong> が推奨されています。
+    </div>
+  </div>
+
+  <!-- ハッシュタグ一覧 -->
+  <div class="hashtag-section">
+    <div class="hashtag-title">
+      検出したハッシュタグ
+      <span class="hashtag-count-badge" id="badge-count">0個</span>
+    </div>
+    <div class="hashtag-list" id="hashtag-list">
+      <span class="hashtag-empty">ハッシュタグが見つかりません</span>
+    </div>
+  </div>
+
+  <div class="footer">arisa-tools / No.014 — Note記事チェッカー</div>
+</div>
+
+<!-- コピートースト -->
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+  const textarea = document.getElementById('articleText');
+
+  // リアルタイム更新
+  textarea.addEventListener('input', analyze);
+
+  function analyze() {
+    const text = textarea.value;
+
+    // 文字数（全体）
+    const total = text.length;
+
+    // 文字数（空白除く）：スペース・全角スペース・改行・タブを除く
+    const noSpace = text.replace(/[\s　]/g, '').length;
+
+    // 読了時間：400字/分
+    const readMin = noSpace / 400;
+    let readLabel;
+    if (noSpace === 0) {
+      readLabel = '—';
+    } else if (readMin < 1) {
+      readLabel = '1分以内';
+    } else {
+      readLabel = '約' + Math.ceil(readMin) + '分';
+    }
+
+    // 行数
+    const lines = text === '' ? 0 : text.split('\n').length;
+
+    // ハッシュタグ検出
+    // # の後に続く文字列（日本語・英数字・記号アンダースコアを含む）
+    const tagMatches = text.match(/#[\w぀-ヿ㐀-鿿豈-﫿ｦ-ﾟー一-鿿]+/g) || [];
+    // 重複排除
+    const uniqueTags = [...new Set(tagMatches)];
+    const tagCount = uniqueTags.length;
+
+    // カード更新
+    setVal('val-total',   formatNum(total),   '字');
+    setVal('val-nospace', formatNum(noSpace),  '字');
+    setVal('val-lines',   formatNum(lines),    '行');
+    setVal('val-tags',    tagCount,            '個');
+
+    const timeEl = document.getElementById('val-time');
+    timeEl.innerHTML = readLabel === '—' ? '<span style="color:var(--label)">—</span>' : readLabel;
+
+    // 文字数ヒント
+    const hintEl = document.getElementById('hint-total');
+    if (noSpace === 0) {
+      hintEl.innerHTML = '本文をペーストしてください';
+      hintEl.className = 'stat-hint';
+    } else if (noSpace < 800) {
+      hintEl.innerHTML = '<span class="hint-info">短め無料記事レベル</span>';
+    } else if (noSpace < 3000) {
+      hintEl.innerHTML = '<span class="hint-ok">標準的な無料記事レベル</span>';
+    } else if (noSpace < 6000) {
+      hintEl.innerHTML = '<span class="hint-warn">長め・有料記事向けレベル</span>';
+    } else {
+      hintEl.innerHTML = '<span class="hint-warn" style="color:var(--purple)">連載・大作レベル</span>';
+    }
+
+    // ハッシュタグヒント
+    const tagHintEl = document.getElementById('hint-tags');
+    if (tagCount === 0) {
+      tagHintEl.innerHTML = 'Noteの推奨：3〜5個';
+      tagHintEl.className = 'stat-hint';
+    } else if (tagCount < 3) {
+      tagHintEl.innerHTML = '<span class="hint-warn">少なめ（推奨：3〜5個）</span>';
+    } else if (tagCount <= 5) {
+      tagHintEl.innerHTML = '<span class="hint-ok">推奨範囲内（3〜5個）</span>';
+    } else {
+      tagHintEl.innerHTML = '<span class="hint-warn">多め（推奨：3〜5個）</span>';
+    }
+
+    // ガイドバー更新（最大 8000字 を100%とする）
+    const MAX = 8000;
+    const pos = Math.min(noSpace, MAX);
+
+    const s800  = Math.min(pos, 800);
+    const s3000 = Math.max(0, Math.min(pos - 800,  2200));
+    const s6000 = Math.max(0, Math.min(pos - 3000, 3000));
+    const sEpic = Math.max(0, pos - 6000);
+
+    document.getElementById('seg-short').style.width = (s800  / MAX * 100) + '%';
+    document.getElementById('seg-std').style.width   = (s3000 / MAX * 100) + '%';
+    document.getElementById('seg-long').style.width  = (s6000 / MAX * 100) + '%';
+    document.getElementById('seg-epic').style.width  = (sEpic / MAX * 100) + '%';
+
+    document.getElementById('guide-current').textContent = formatNum(noSpace) + '字';
+
+    // ハッシュタグガイド
+    const hashNote = document.getElementById('guide-hashtag-note');
+    if (tagCount === 0) {
+      hashNote.innerHTML = 'ハッシュタグ：Noteでは <strong>3〜5個</strong> が推奨されています。';
+    } else if (tagCount < 3) {
+      hashNote.innerHTML = 'ハッシュタグ：<span style="color:var(--yellow)">あと ' + (3 - tagCount) + ' 個追加すると推奨範囲（3〜5個）に達します。</span>';
+    } else if (tagCount <= 5) {
+      hashNote.innerHTML = 'ハッシュタグ：<span style="color:var(--green)">' + tagCount + '個 — 推奨範囲内です。</span>';
+    } else {
+      hashNote.innerHTML = 'ハッシュタグ：<span style="color:var(--yellow)">' + tagCount + '個 — Noteの推奨は3〜5個です。多すぎるとスパムと見なされる場合があります。</span>';
+    }
+
+    // ハッシュタグ一覧
+    const listEl = document.getElementById('hashtag-list');
+    const badgeEl = document.getElementById('badge-count');
+    badgeEl.textContent = tagCount + '個';
+
+    if (uniqueTags.length === 0) {
+      listEl.innerHTML = '<span class="hashtag-empty">ハッシュタグが見つかりません</span>';
+    } else {
+      listEl.innerHTML = uniqueTags.map(tag =>
+        `<span class="hashtag-badge" onclick="copyTag('${escapeHtml(tag)}')">${escapeHtml(tag)}</span>`
+      ).join('');
+    }
+
+    // カードハイライト
+    updateHighlight('card-total',   total > 0,    'highlight-blue');
+    updateHighlight('card-nospace', noSpace > 0,   'highlight-green');
+    updateHighlight('card-time',    noSpace > 0,   'highlight-orange');
+    updateHighlight('card-lines',   lines > 1,     'highlight-purple');
+    updateHighlight('card-tags',    tagCount > 0,  'highlight-yellow');
+  }
+
+  function setVal(id, num, unit) {
+    document.getElementById(id).innerHTML = num + '<span class="stat-unit">' + unit + '</span>';
+  }
+
+  function formatNum(n) {
+    return n.toLocaleString('ja-JP');
+  }
+
+  function updateHighlight(cardId, condition, className) {
+    const el = document.getElementById(cardId);
+    if (condition) {
+      el.classList.add(className);
+    } else {
+      el.classList.remove(className);
+    }
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ハッシュタグをクリップボードにコピー
+  function copyTag(tag) {
+    navigator.clipboard.writeText(tag).then(() => {
+      showToast('「' + tag + '」をコピーしました');
+    }).catch(() => {
+      // フォールバック
+      const ta = document.createElement('textarea');
+      ta.value = tag;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('「' + tag + '」をコピーしました');
+    });
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  function clearAll() {
+    textarea.value = '';
+    analyze();
+  }
+</script>
+</body>
+</html>
