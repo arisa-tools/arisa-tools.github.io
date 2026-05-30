@@ -1,0 +1,819 @@
+<!-- 業務ID：R8-3-Tl016 -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日数計算機 | arisa-tools</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #1f2235;
+            --border: #2e3345;
+            --accent: #4a9eff;
+            --accent-glow: rgba(74, 158, 255, 0.12);
+            --green: #34d399;
+            --green-glow: rgba(52, 211, 153, 0.12);
+            --orange: #fb923c;
+            --orange-glow: rgba(251, 146, 60, 0.12);
+            --red: #f87171;
+            --red-glow: rgba(248, 113, 113, 0.12);
+            --text: #e8eaf0;
+            --text-dim: #8a8fa8;
+            --label: #6b7194;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px 16px 60px;
+        }
+
+        .container {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* ── ヘッダー ── */
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+            padding-top: 16px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text-dim);
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            background: var(--accent-glow);
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            margin-bottom: 6px;
+        }
+
+        .header .subtitle {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        /* ── タブ ── */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 6px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 9px 0;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dim);
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* ── カード ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--label);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        /* ── フォーム要素 ── */
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .form-row label {
+            font-size: 13px;
+            color: var(--text-dim);
+            white-space: nowrap;
+            min-width: 54px;
+        }
+
+        input[type="date"],
+        input[type="number"],
+        select {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            flex: 1;
+            outline: none;
+            transition: border-color 0.2s;
+            appearance: none;
+        }
+
+        input[type="date"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--accent);
+        }
+
+        /* dateのカレンダーアイコン調整 */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5);
+            cursor: pointer;
+        }
+
+        .form-note {
+            font-size: 11px;
+            color: var(--label);
+            margin-top: -8px;
+            margin-bottom: 14px;
+            padding-left: 66px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .checkbox-row label {
+            font-size: 13px;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        /* ── 計算ボタン ── */
+        .btn-calc {
+            width: 100%;
+            padding: 13px;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .btn-calc:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-calc:active { transform: translateY(0); }
+
+        /* ── 結果表示 ── */
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .result-card.visible { display: block; }
+
+        .result-main {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 52px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .result-unit {
+            font-size: 18px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--label);
+            margin-top: 6px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .result-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .result-item-label {
+            font-size: 11px;
+            color: var(--label);
+            margin-bottom: 4px;
+        }
+
+        .result-item-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .result-item-unit {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-left: 2px;
+        }
+
+        /* 警告・期限バッジ */
+        .deadline-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .badge-past {
+            background: var(--red-glow);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+
+        .badge-today {
+            background: var(--orange-glow);
+            color: var(--orange);
+            border: 1px solid var(--orange);
+        }
+
+        .badge-soon {
+            background: var(--orange-glow);
+            color: var(--orange);
+        }
+
+        .badge-ok {
+            background: var(--green-glow);
+            color: var(--green);
+        }
+
+        /* ── エラー ── */
+        .error-msg {
+            font-size: 13px;
+            color: var(--red);
+            background: var(--red-glow);
+            border: 1px solid var(--red);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-msg.visible { display: block; }
+
+        /* ── 区切り線 ── */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+
+        /* ── フッター ── */
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--label);
+            margin-top: 32px;
+        }
+
+        /* ── 日付追加ボタン計算モード ── */
+        #tab-add .form-row select {
+            max-width: 120px;
+            flex: none;
+        }
+
+        #tab-add .form-row input[type="number"] {
+            max-width: 100px;
+            flex: none;
+            text-align: right;
+        }
+
+        .result-date-big {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            text-align: center;
+            padding: 20px 0 8px;
+        }
+
+        .result-weekday {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .result-reiwa {
+            text-align: center;
+            font-size: 12px;
+            color: var(--label);
+            margin-bottom: 16px;
+        }
+
+        /* 今日ボタン */
+        .btn-today {
+            font-size: 11px;
+            color: var(--accent);
+            background: var(--accent-glow);
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .btn-today:hover { opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ヘッダー -->
+    <div class="header">
+        <div>
+            <a class="back-link" href="index.html">← ツール一覧</a>
+        </div>
+        <div class="header-badge">No.016</div>
+        <h1>日数計算機</h1>
+        <div class="subtitle">2日付の間の日数・期間後の日付を即計算</div>
+    </div>
+
+    <!-- タブ -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-diff">期間を計算</button>
+        <button class="tab-btn" data-tab="tab-add">N日後/前を計算</button>
+        <button class="tab-btn" data-tab="tab-deadline">締切チェック</button>
+    </div>
+
+    <!-- ========== タブ1：期間計算 ========== -->
+    <div id="tab-diff" class="tab-panel">
+        <div class="card">
+            <div class="card-title">2つの日付の間隔</div>
+
+            <div class="form-row">
+                <label>開始日</label>
+                <input type="date" id="diff-from">
+                <button class="btn-today" id="diff-from-today">今日</button>
+            </div>
+            <div class="form-row">
+                <label>終了日</label>
+                <input type="date" id="diff-to">
+                <button class="btn-today" id="diff-to-today">今日</button>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" id="diff-exclude-weekends">
+                <label for="diff-exclude-weekends">土日を除いた営業日のみカウント</label>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="diff-include-end">
+                <label for="diff-include-end">終了日当日を含める</label>
+            </div>
+
+            <div class="error-msg" id="diff-error">終了日は開始日より後の日付を入力してください</div>
+            <button class="btn-calc" id="diff-calc">計算する</button>
+        </div>
+
+        <div class="result-card" id="diff-result">
+            <div class="result-main">
+                <div class="result-number" id="diff-days">0</div>
+                <div class="result-unit" id="diff-unit">日間</div>
+                <div class="result-label" id="diff-label"></div>
+            </div>
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-item-label">週数</div>
+                    <div><span class="result-item-value" id="diff-weeks">0</span><span class="result-item-unit">週 </span><span class="result-item-value" id="diff-rem-days">0</span><span class="result-item-unit">日</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">月数（概算）</div>
+                    <div><span class="result-item-value" id="diff-months">0</span><span class="result-item-unit">ヶ月</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== タブ2：N日後/前 ========== -->
+    <div id="tab-add" class="tab-panel" style="display:none;">
+        <div class="card">
+            <div class="card-title">基準日から N 日後・前の日付</div>
+
+            <div class="form-row">
+                <label>基準日</label>
+                <input type="date" id="add-base">
+                <button class="btn-today" id="add-base-today">今日</button>
+            </div>
+            <div class="form-row">
+                <label>方向</label>
+                <select id="add-dir" style="max-width:110px;flex:none;">
+                    <option value="after">日後</option>
+                    <option value="before">日前</option>
+                </select>
+                <input type="number" id="add-n" value="30" min="0" max="36500" style="max-width:90px;flex:none;text-align:right;">
+                <span style="font-size:14px;color:var(--text-dim);">日</span>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="add-skip-weekends">
+                <label for="add-skip-weekends">土日を飛ばして営業日のみカウント</label>
+            </div>
+
+            <button class="btn-calc" id="add-calc">計算する</button>
+        </div>
+
+        <div class="result-card" id="add-result">
+            <div class="result-date-big" id="add-date-str"></div>
+            <div class="result-weekday" id="add-weekday"></div>
+            <div class="result-reiwa" id="add-reiwa"></div>
+            <div class="divider"></div>
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-item-label">基準日から</div>
+                    <div><span class="result-item-value" id="add-n-display">0</span><span class="result-item-unit">日</span></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">方向</div>
+                    <div class="result-item-value" id="add-dir-display">後</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== タブ3：締切チェック ========== -->
+    <div id="tab-deadline" class="tab-panel" style="display:none;">
+        <div class="card">
+            <div class="card-title">締切まであと何日？</div>
+
+            <div class="form-row">
+                <label>今日</label>
+                <input type="date" id="dl-today-input">
+                <button class="btn-today" id="dl-today-btn">今日</button>
+            </div>
+            <div class="form-row">
+                <label>締切日</label>
+                <input type="date" id="dl-deadline">
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="dl-exclude-weekends">
+                <label for="dl-exclude-weekends">土日を除いた営業日でカウント</label>
+            </div>
+
+            <button class="btn-calc" id="dl-calc">チェックする</button>
+        </div>
+
+        <div class="result-card" id="dl-result">
+            <div class="result-main">
+                <div id="dl-badge" class="deadline-badge"></div>
+                <div class="result-number" id="dl-days">0</div>
+                <div class="result-unit" id="dl-unit">日</div>
+                <div class="result-label" id="dl-label"></div>
+            </div>
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-item-label">締切日</div>
+                    <div class="result-item-value" id="dl-deadline-display" style="font-size:14px;"></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-label">状態</div>
+                    <div class="result-item-value" id="dl-status" style="font-size:14px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">arisa-tools No.016 &nbsp;|&nbsp; Powered by Aiaこんぶ ツール部</div>
+</div>
+
+<script>
+    // ── 定数 ──
+    const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+    const REIWA_START = new Date('2019-05-01');
+
+    // ── ユーティリティ ──
+    function today() {
+        const d = new Date();
+        return toInputValue(d);
+    }
+
+    function toInputValue(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function parseDate(str) {
+        if (!str) return null;
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
+
+    function diffDays(a, b) {
+        return Math.round((b - a) / 86400000);
+    }
+
+    // 2日付の間の営業日数（土日除く）
+    function businessDays(from, to, includeEnd) {
+        let count = 0;
+        const cur = new Date(from);
+        const end = new Date(to);
+        if (includeEnd) end.setDate(end.getDate() + 1);
+        while (cur < end) {
+            const dw = cur.getDay();
+            if (dw !== 0 && dw !== 6) count++;
+            cur.setDate(cur.getDate() + 1);
+        }
+        return count;
+    }
+
+    // 和暦変換（令和のみ）
+    function toReiwa(date) {
+        if (date >= REIWA_START) {
+            const yr = date.getFullYear() - 2018;
+            return `令和${yr}年${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+        // 平成
+        if (date >= new Date('1989-01-08')) {
+            const yr = date.getFullYear() - 1988;
+            return `平成${yr}年${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+        return '';
+    }
+
+    function formatDate(date) {
+        const y = date.getFullYear();
+        const m = date.getMonth() + 1;
+        const d = date.getDate();
+        return `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+    }
+
+    // N営業日後/前の日付を求める
+    function addBusinessDays(base, n, direction) {
+        const date = new Date(base);
+        let remaining = n;
+        const step = direction === 'after' ? 1 : -1;
+        while (remaining > 0) {
+            date.setDate(date.getDate() + step);
+            const dw = date.getDay();
+            if (dw !== 0 && dw !== 6) remaining--;
+        }
+        return date;
+    }
+
+    // ── タブ切り替え ──
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).style.display = 'block';
+        });
+    });
+
+    // ── 今日ボタン ──
+    const todayBtns = [
+        ['diff-from-today', 'diff-from'],
+        ['diff-to-today', 'diff-to'],
+        ['add-base-today', 'add-base'],
+        ['dl-today-btn', 'dl-today-input'],
+    ];
+    todayBtns.forEach(([btnId, inputId]) => {
+        document.getElementById(btnId).addEventListener('click', () => {
+            document.getElementById(inputId).value = today();
+        });
+    });
+
+    // ── 初期値：今日 ──
+    ['diff-from', 'add-base', 'dl-today-input'].forEach(id => {
+        document.getElementById(id).value = today();
+    });
+
+    // ── タブ1：期間計算 ──
+    document.getElementById('diff-calc').addEventListener('click', () => {
+        const fromStr = document.getElementById('diff-from').value;
+        const toStr   = document.getElementById('diff-to').value;
+        const excludeWeekends = document.getElementById('diff-exclude-weekends').checked;
+        const includeEnd      = document.getElementById('diff-include-end').checked;
+        const errEl   = document.getElementById('diff-error');
+        const resEl   = document.getElementById('diff-result');
+
+        errEl.classList.remove('visible');
+        resEl.classList.remove('visible');
+
+        if (!fromStr || !toStr) { errEl.textContent = '日付を両方入力してください'; errEl.classList.add('visible'); return; }
+        const from = parseDate(fromStr);
+        const to   = parseDate(toStr);
+        if (to < from) { errEl.textContent = '終了日は開始日と同じか、後の日付を入力してください'; errEl.classList.add('visible'); return; }
+
+        let days;
+        if (excludeWeekends) {
+            days = businessDays(from, to, includeEnd);
+        } else {
+            days = diffDays(from, to) + (includeEnd ? 1 : 0);
+        }
+
+        const weeks = Math.floor(days / 7);
+        const remDays = days % 7;
+        const months = (days / 30.4375).toFixed(1);
+
+        document.getElementById('diff-days').textContent = days.toLocaleString();
+        document.getElementById('diff-unit').textContent = excludeWeekends ? '営業日間' : '日間';
+        document.getElementById('diff-label').textContent =
+            `${formatDate(from)} 〜 ${formatDate(to)}${includeEnd ? '（当日含む）' : ''}`;
+        document.getElementById('diff-weeks').textContent = weeks;
+        document.getElementById('diff-rem-days').textContent = remDays;
+        document.getElementById('diff-months').textContent = months;
+
+        resEl.classList.add('visible');
+    });
+
+    // ── タブ2：N日後/前 ──
+    document.getElementById('add-calc').addEventListener('click', () => {
+        const baseStr   = document.getElementById('add-base').value;
+        const dir       = document.getElementById('add-dir').value;
+        const nVal      = parseInt(document.getElementById('add-n').value, 10);
+        const skipWeekends = document.getElementById('add-skip-weekends').checked;
+        const resEl     = document.getElementById('add-result');
+
+        resEl.classList.remove('visible');
+
+        if (!baseStr || isNaN(nVal) || nVal < 0) return;
+
+        const base = parseDate(baseStr);
+        let result;
+
+        if (nVal === 0) {
+            result = new Date(base);
+        } else if (skipWeekends) {
+            result = addBusinessDays(base, nVal, dir);
+        } else {
+            result = new Date(base);
+            if (dir === 'after') {
+                result.setDate(result.getDate() + nVal);
+            } else {
+                result.setDate(result.getDate() - nVal);
+            }
+        }
+
+        const dw = result.getDay();
+        const wdLabel = WEEKDAYS[dw];
+        const isWeekend = dw === 0 || dw === 6;
+
+        document.getElementById('add-date-str').textContent = formatDate(result);
+        document.getElementById('add-weekday').textContent = `（${wdLabel}曜日）${isWeekend ? '　休日' : ''}`;
+        document.getElementById('add-reiwa').textContent = toReiwa(result);
+        document.getElementById('add-n-display').textContent = nVal;
+        document.getElementById('add-dir-display').textContent = dir === 'after' ? '後' : '前';
+
+        resEl.classList.add('visible');
+    });
+
+    // ── タブ3：締切チェック ──
+    document.getElementById('dl-calc').addEventListener('click', () => {
+        const todayStr    = document.getElementById('dl-today-input').value;
+        const deadlineStr = document.getElementById('dl-deadline').value;
+        const excludeWeekends = document.getElementById('dl-exclude-weekends').checked;
+        const resEl = document.getElementById('dl-result');
+
+        resEl.classList.remove('visible');
+
+        if (!todayStr || !deadlineStr) return;
+
+        const todayDate    = parseDate(todayStr);
+        const deadlineDate = parseDate(deadlineStr);
+
+        let days;
+        const rawDiff = diffDays(todayDate, deadlineDate);
+
+        if (excludeWeekends) {
+            if (rawDiff > 0) {
+                days = businessDays(todayDate, deadlineDate, false);
+            } else if (rawDiff < 0) {
+                days = -businessDays(deadlineDate, todayDate, false);
+            } else {
+                days = 0;
+            }
+        } else {
+            days = rawDiff;
+        }
+
+        const badge  = document.getElementById('dl-badge');
+        const daysEl = document.getElementById('dl-days');
+        const unitEl = document.getElementById('dl-unit');
+        const labelEl = document.getElementById('dl-label');
+        const statusEl = document.getElementById('dl-status');
+
+        badge.className = 'deadline-badge';
+        daysEl.textContent = Math.abs(days).toLocaleString();
+        unitEl.textContent = excludeWeekends ? '営業日' : '日';
+
+        if (days < 0) {
+            badge.classList.add('badge-past');
+            badge.textContent = '期限超過';
+            labelEl.textContent = `${Math.abs(days)}${excludeWeekends ? '営業日' : '日'}前に期限切れ`;
+            statusEl.textContent = '超過';
+        } else if (days === 0) {
+            badge.classList.add('badge-today');
+            badge.textContent = '本日締切';
+            labelEl.textContent = '今日が締切日です！';
+            statusEl.textContent = '本日';
+        } else if (days <= 3) {
+            badge.classList.add('badge-soon');
+            badge.textContent = '締切間近';
+            labelEl.textContent = `あと${days}${excludeWeekends ? '営業日' : '日'}で締切`;
+            statusEl.textContent = '要注意';
+        } else {
+            badge.classList.add('badge-ok');
+            badge.textContent = '余裕あり';
+            labelEl.textContent = `あと${days}${excludeWeekends ? '営業日' : '日'}で締切`;
+            statusEl.textContent = '余裕あり';
+        }
+
+        const dlDw = deadlineDate.getDay();
+        document.getElementById('dl-deadline-display').textContent =
+            `${formatDate(deadlineDate)}（${WEEKDAYS[dlDw]}）`;
+
+        resEl.classList.add('visible');
+    });
+</script>
+
+</body>
+</html>
