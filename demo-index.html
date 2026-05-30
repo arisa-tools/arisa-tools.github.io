@@ -213,6 +213,17 @@
   .tag-survey { color: var(--green); background: var(--green-glow); }
   .tag-general { color: var(--accent); background: var(--accent-glow); }
   .tag-demo { color: var(--yellow); background: var(--yellow-glow); }
+  .tag-main { color: #f472b6; background: rgba(244, 114, 182, 0.12); }
+
+  /* 本業ツールカード */
+  .tool-card.featured {
+    border-color: rgba(244, 114, 182, 0.4);
+    background: linear-gradient(135deg, #1a1d27 0%, #1e1826 100%);
+  }
+  .tool-card.featured:hover {
+    border-color: #f472b6;
+    box-shadow: 0 4px 20px rgba(244, 114, 182, 0.12);
+  }
 
   /* ── 空状態 ── */
   .empty-card {
@@ -265,6 +276,19 @@
 
   <!-- 本番インデックスへのリンク -->
   <a class="nav-link" href="index.html">← 公開済みツール一覧へ</a>
+
+  <!-- 本業特化ツール -->
+  <div class="category">
+    <div class="category-title">本業特化（重点整備）</div>
+
+    <a class="tool-card featured" href="R001-spec-links.html">
+      <div class="tool-top"><span class="tool-number">No.R001</span><span class="tool-status">確認待ち</span></div>
+      <div class="tool-name">仕様書・準則リンク集</div>
+      <div class="tool-desc">測量・建設業務の仕様書・準則を一元管理。検索・カテゴリ分類・管理機能付き</div>
+      <div class="tool-tags"><span class="tag tag-demo">デモ</span><span class="tag tag-main">本業特化</span><span class="tag tag-survey">測量</span></div>
+    </a>
+
+  </div>
 
   <!-- デモツール一覧 -->
   <div class="category">
