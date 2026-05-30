@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>arisa-tools | デモ確認ページ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2e3345;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74, 158, 255, 0.12);
+    --green: #34d399;
+    --green-glow: rgba(52, 211, 153, 0.12);
+    --orange: #fb923c;
+    --orange-glow: rgba(251, 146, 60, 0.12);
+    --yellow: #fbbf24;
+    --yellow-glow: rgba(251, 191, 36, 0.12);
+    --text: #e8eaf0;
+    --text-dim: #8a8fa8;
+    --label: #6b7194;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-top: 20px;
+  }
+
+  .header-logo {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .header .subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .header .badge-demo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--yellow);
+    background: var(--yellow-glow);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    padding: 3px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  /* ── 説明バナー ── */
+  .notice {
+    background: var(--yellow-glow);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    color: var(--yellow);
+    line-height: 1.7;
+  }
+
+  .notice strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── ナビ ── */
+  .nav-link {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    margin-bottom: 28px;
+    transition: border-color 0.2s;
+  }
+  .nav-link:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── カテゴリ ── */
+  .category {
+    margin-bottom: 32px;
+  }
+
+  .category-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .category-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── ツールカード ── */
+  .tool-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .tool-card:hover {
+    border-color: var(--yellow);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(251, 191, 36, 0.08);
+  }
+
+  .tool-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .tool-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .tool-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--yellow);
+    background: var(--yellow-glow);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .tool-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .tool-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .tool-tags {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-survey { color: var(--green); background: var(--green-glow); }
+  .tag-general { color: var(--accent); background: var(--accent-glow); }
+  .tag-demo { color: var(--yellow); background: var(--yellow-glow); }
+
+  /* ── 空状態 ── */
+  .empty-card {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    color: var(--label);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  /* ── フッター ── */
+  .footer {
+    text-align: center;
+    padding: 24px 0 12px;
+    font-size: 11px;
+    color: var(--label);
+  }
+
+  /* ── アニメーション ── */
+  .tool-card {
+    animation: slideUp 0.4s ease both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-logo">🚧</div>
+    <h1>arisa-tools</h1>
+    <div class="subtitle">デモ確認ページ</div>
+    <div class="badge-demo">確認待ち / DEMO</div>
+  </div>
+
+  <!-- 説明バナー -->
+  <div class="notice">
+    <strong>⚠ このページはオーナー確認用のデモページです</strong>
+    ここに掲載されているツールは制作済みですが、まだ公式リリース前です。<br>
+    動作確認・デザイン確認後、OKであれば本番インデックスに昇格します。
+  </div>
+
+  <!-- 本番インデックスへのリンク -->
+  <a class="nav-link" href="index.html">← 公開済みツール一覧へ</a>
+
+  <!-- デモツール一覧 -->
+  <div class="category">
+    <div class="category-title">確認待ちツール</div>
+
+    <!-- ツールカードをここに追加 -->
+    <div class="empty-card">
+      確認待ちのツールはありません。<br>
+      新しいツールが制作されるとここに表示されます。
+    </div>
+
+  </div>
+
+  <div class="footer">arisa-tools demo — owner review page</div>
+
+</div>
+</body>
+</html>
