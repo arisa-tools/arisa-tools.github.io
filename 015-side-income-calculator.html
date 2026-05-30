@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>副業収入かんたん計算機 v1.0 | arisa-tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74, 158, 255, 0.12);
+    --green: #34d399;
+    --green-glow: rgba(52, 211, 153, 0.12);
+    --green-border: rgba(52, 211, 153, 0.35);
+    --orange: #fb923c;
+    --orange-glow: rgba(251, 146, 60, 0.12);
+    --orange-border: rgba(251, 146, 60, 0.35);
+    --purple: #a78bfa;
+    --purple-glow: rgba(167, 139, 250, 0.12);
+    --yellow: #fbbf24;
+    --yellow-glow: rgba(251, 191, 36, 0.12);
+    --red: #f87171;
+    --red-glow: rgba(248, 113, 113, 0.12);
+    --text: #e8eaf0;
+    --text-dim: #8a8fa8;
+    --label: #6b7194;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  /* ヘッダー */
+  .header { text-align: center; margin-bottom: 24px; padding-top: 12px; }
+  .header-icon { font-size: 28px; margin-bottom: 6px; }
+  .header h1 { font-size: 20px; font-weight: 900; }
+  .header .back-link {
+    display: inline-block; margin-top: 8px;
+    font-size: 12px; color: var(--text-dim); text-decoration: none;
+  }
+  .header .back-link:hover { color: var(--accent); }
+  .version {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--accent); background: var(--accent-glow);
+    padding: 2px 10px; border-radius: 20px; display: inline-block; margin-top: 6px;
+  }
+
+  /* セクション共通 */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+
+  /* ラジオグループ */
+  .radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+
+  .radio-label input[type="radio"] { display: none; }
+
+  .radio-label.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--accent);
+  }
+
+  .radio-label:hover { border-color: var(--accent); }
+
+  /* スライダー行 */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .slider-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(74, 158, 255, 0.5);
+    transition: box-shadow 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 10px rgba(74, 158, 255, 0.8);
+  }
+
+  .slider-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid rgba(74, 158, 255, 0.25);
+    border-radius: 6px;
+    padding: 4px 10px;
+    min-width: 64px;
+    text-align: center;
+  }
+
+  /* 数値入力フィールド */
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .input-label-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    min-width: 90px;
+  }
+
+  input[type="number"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 180px;
+  }
+
+  input[type="number"]:focus { border-color: var(--accent); }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { opacity: 0.5; }
+
+  .input-unit {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* 月収自動計算表示 */
+  .calc-preview {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: -4px;
+    margin-bottom: 12px;
+    padding-left: 100px;
+    line-height: 1.8;
+  }
+
+  .calc-preview span {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  /* 月次・年次カード */
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 520px) {
+    .result-grid { grid-template-columns: 1fr; }
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+
+  .result-card.monthly { border-top: 3px solid var(--accent); }
+  .result-card.yearly  { border-top: 3px solid var(--purple); }
+
+  .result-card-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+  }
+
+  .result-card.monthly .result-card-title { color: var(--accent); }
+  .result-card.yearly  .result-card-title { color: var(--purple); }
+
+  .result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .result-item:first-child { padding-top: 0; }
+
+  .result-item-label {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .result-item-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .result-item-value.accent  { color: var(--accent); }
+  .result-item-value.green   { color: var(--green); }
+  .result-item-value.purple  { color: var(--purple); }
+  .result-item-value.orange  { color: var(--orange); }
+  .result-item-value.yellow  { color: var(--yellow); }
+  .result-item-value.red     { color: var(--red); }
+
+  /* 確定申告バナー */
+  .tax-banner {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .tax-banner.required {
+    background: var(--orange-glow);
+    border: 1px solid var(--orange-border);
+  }
+
+  .tax-banner.not-required {
+    background: var(--green-glow);
+    border: 1px solid var(--green-border);
+  }
+
+  .tax-banner-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .tax-banner-body {}
+
+  .tax-banner-main {
+    font-size: 15px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+
+  .tax-banner.required  .tax-banner-main { color: var(--orange); }
+  .tax-banner.not-required .tax-banner-main { color: var(--green); }
+
+  .tax-banner-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* まとめメッセージ */
+  .summary-msg {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-dim);
+  }
+
+  .summary-msg strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .summary-msg .highlight-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green);
+  }
+
+  /* 注意書き */
+  .note-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    color: var(--label);
+    line-height: 1.8;
+  }
+
+  .note-box strong { color: var(--text-dim); }
+
+  /* フッター */
+  .footer {
+    text-align: center;
+    padding: 20px 0 10px;
+    font-size: 11px;
+    color: var(--label);
+  }
+
+  /* 非表示 */
+  .hidden { display: none; }
+
+  /* レスポンシブ補正 */
+  @media (max-width: 480px) {
+    .slider-label { min-width: 72px; font-size: 12px; }
+    .input-label-text { min-width: 72px; font-size: 12px; }
+    .calc-preview { padding-left: 82px; }
+    input[type="number"] { width: 140px; font-size: 14px; }
+    .result-item-value { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-icon">💰</div>
+    <h1>副業収入かんたん計算機</h1>
+    <div class="version">v1.0</div>
+    <br>
+    <a class="back-link" href="index.html">← ツール一覧に戻る</a>
+  </div>
+
+  <!-- 入力：稼働時間 -->
+  <div class="section">
+    <div class="section-title">月の稼働時間</div>
+    <div class="slider-row">
+      <span class="slider-label">稼働時間</span>
+      <input type="range" id="hoursSlider" min="1" max="200" value="20" oninput="syncHours(this.value)">
+      <span class="slider-val"><span id="hoursVal">20</span>h</span>
+    </div>
+  </div>
+
+  <!-- 入力：時給 or 月収 -->
+  <div class="section">
+    <div class="section-title">収入の入力方法</div>
+    <div class="radio-group" id="modeGroup">
+      <label class="radio-label selected" data-val="hourly">
+        <input type="radio" name="mode" value="hourly" checked>
+        時給で入力
+      </label>
+      <label class="radio-label" data-val="monthly">
+        <input type="radio" name="mode" value="monthly">
+        月収で入力
+      </label>
+    </div>
+
+    <!-- 時給モード -->
+    <div id="hourlyBlock">
+      <div class="input-row">
+        <span class="input-label-text">時給</span>
+        <input type="number" id="hourlyRate" value="2000" min="100" max="100000" step="100" oninput="calc()">
+        <span class="input-unit">円 / 時間</span>
+      </div>
+      <div class="calc-preview">月収の目安：<span id="monthlyPreview">40,000</span> 円（稼働時間 × 時給）</div>
+    </div>
+
+    <!-- 月収モード -->
+    <div id="monthlyBlock" class="hidden">
+      <div class="input-row">
+        <span class="input-label-text">月収</span>
+        <input type="number" id="monthlyIncome" value="40000" min="0" max="10000000" step="1000" oninput="calc()">
+        <span class="input-unit">円</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 入力：経費 -->
+  <div class="section">
+    <div class="section-title">経費（任意）</div>
+    <div class="slider-row">
+      <span class="slider-label">経費率</span>
+      <input type="range" id="expenseSlider" min="0" max="50" value="0" oninput="syncExpense(this.value)">
+      <span class="slider-val"><span id="expenseVal">0</span>%</span>
+    </div>
+    <div class="calc-preview">経費額：<span id="expenseAmount">0</span> 円 / 月（月収の <span id="expensePct">0</span>%）</div>
+  </div>
+
+  <!-- 入力：副業の種類 -->
+  <div class="section">
+    <div class="section-title">副業の種類</div>
+    <div class="radio-group" id="typeGroup">
+      <label class="radio-label selected" data-val="misc">
+        <input type="radio" name="type" value="misc" checked>
+        雑所得（ほとんどの副業）
+      </label>
+      <label class="radio-label" data-val="business">
+        <input type="radio" name="type" value="business">
+        事業所得（個人事業主）
+      </label>
+    </div>
+  </div>
+
+  <!-- 確定申告バナー -->
+  <div class="tax-banner not-required" id="taxBanner">
+    <div class="tax-banner-icon" id="taxIcon">✅</div>
+    <div class="tax-banner-body">
+      <div class="tax-banner-main" id="taxMain">確定申告は不要です</div>
+      <div class="tax-banner-sub" id="taxSub">副業の年収が20万円以下のため、確定申告は不要です（給与所得者の場合）。</div>
+    </div>
+  </div>
+
+  <!-- 結果カード -->
+  <div class="result-grid">
+
+    <!-- 月次 -->
+    <div class="result-card monthly">
+      <div class="result-card-title">Monthly — 月次サマリー</div>
+      <div class="result-item">
+        <span class="result-item-label">月収（総額）</span>
+        <span class="result-item-value accent" id="r-monthly-gross">0 円</span>
+      </div>
+      <div class="result-item">
+        <span class="result-item-label">経費</span>
+        <span class="result-item-value red" id="r-monthly-expense">0 円</span>
+      </div>
+      <div class="result-item">
+        <span class="result-item-label">副業所得</span>
+        <span class="result-item-value yellow" id="r-monthly-income">0 円</span>
+      </div>
+      <div class="result-item">
+        <span class="result-item-label">月の手取り概算</span>
+        <span class="result-item-value green" id="r-monthly-net">0 円</span>
+      </div>
+    </div>
+
+    <!-- 年次 -->
+    <div class="result-card yearly">
+      <div class="result-card-title">Yearly — 年次サマリー</div>
+      <div class="result-item">
+        <span class="result-item-label">年収（副業分）</span>
+        <span class="result-item-value purple" id="r-yearly-gross">0 円</span>
+      </div>
+      <div class="result-item">
+        <span class="result-item-label">所得税概算</span>
+        <span class="result-item-value red" id="r-yearly-tax">0 円</span>
+      </div>
+      <div class="result-item">
+        <span class="result-item-label">住民税影響概算</span>
+        <span class="result-item-value orange" id="r-yearly-resident">0 円</span>
+      </div>
+      <div class="result-item">
+        <span class="result-item-label">手取り年収概算</span>
+        <span class="result-item-value green" id="r-yearly-net">0 円</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- まとめメッセージ -->
+  <div class="summary-msg" id="summaryMsg">
+    入力すると結果が表示されます。
+  </div>
+
+  <!-- 注意書き -->
+  <div class="note-box">
+    <strong>計算について</strong><br>
+    ・所得税は副業所得のみの簡易計算です（本業との合算は考慮していません）。<br>
+    ・税率：〜195万 → 5% ／ 195万〜330万 → 10% ／ 330万〜695万 → 20%<br>
+    ・住民税は副業所得の10%で概算しています。<br>
+    ・この計算はあくまでも目安です。正確な税額は税理士または確定申告ソフトでご確認ください。
+  </div>
+
+  <div class="footer">arisa-tools / No.015 — 副業収入かんたん計算機</div>
+
+</div>
+
+<script>
+  // ── 初期化 ──────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    // ラジオ：入力モード
+    initRadioGroup('modeGroup', (val) => {
+      document.getElementById('hourlyBlock').classList.toggle('hidden', val !== 'hourly');
+      document.getElementById('monthlyBlock').classList.toggle('hidden', val !== 'monthly');
+      calc();
+    });
+
+    // ラジオ：副業の種類
+    initRadioGroup('typeGroup', () => calc());
+
+    calc();
+  });
+
+  // ── ラジオグループ初期化 ─────────────────────────
+  function initRadioGroup(groupId, onChange) {
+    const group = document.getElementById(groupId);
+    const labels = group.querySelectorAll('.radio-label');
+    labels.forEach(label => {
+      label.addEventListener('click', () => {
+        labels.forEach(l => l.classList.remove('selected'));
+        label.classList.add('selected');
+        label.querySelector('input[type="radio"]').checked = true;
+        onChange(label.dataset.val);
+      });
+    });
+  }
+
+  // ── スライダー同期 ──────────────────────────────
+  function syncHours(v) {
+    document.getElementById('hoursVal').textContent = v;
+    calc();
+  }
+
+  function syncExpense(v) {
+    document.getElementById('expenseVal').textContent = v;
+    calc();
+  }
+
+  // ── メイン計算 ──────────────────────────────────
+  function calc() {
+    const hours = parseInt(document.getElementById('hoursSlider').value) || 0;
+    const expPct = parseInt(document.getElementById('expenseSlider').value) || 0;
+    const mode   = document.querySelector('#modeGroup .radio-label.selected').dataset.val;
+
+    // 月収（総額）
+    let monthlyGross = 0;
+    if (mode === 'hourly') {
+      const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+      monthlyGross = hours * rate;
+      document.getElementById('monthlyPreview').textContent = fmt(monthlyGross);
+    } else {
+      monthlyGross = parseFloat(document.getElementById('monthlyIncome').value) || 0;
+    }
+
+    // 経費
+    const monthlyExpense = Math.round(monthlyGross * expPct / 100);
+    document.getElementById('expenseAmount').textContent = fmt(monthlyExpense);
+    document.getElementById('expensePct').textContent = expPct;
+
+    // 月の副業所得（経費控除後）
+    const monthlyIncome = Math.max(0, monthlyGross - monthlyExpense);
+
+    // 月の簡易手取り（住民税・所得税は年単位で概算するため、月次は単純に所得をそのまま手取りとして表示）
+    // 月次は概算として：所得 - 月あたり税概算
+    const yearlyGross   = monthlyGross   * 12;
+    const yearlyIncome  = monthlyIncome  * 12;
+
+    // 所得税（簡易・副業所得のみ）
+    let yearlyTax = 0;
+    if (yearlyIncome <= 1950000) {
+      yearlyTax = Math.round(yearlyIncome * 0.05);
+    } else if (yearlyIncome <= 3300000) {
+      yearlyTax = Math.round(yearlyIncome * 0.10 - 97500);
+    } else if (yearlyIncome <= 6950000) {
+      yearlyTax = Math.round(yearlyIncome * 0.20 - 427500);
+    } else {
+      yearlyTax = Math.round(yearlyIncome * 0.23 - 636000);
+    }
+    if (yearlyTax < 0) yearlyTax = 0;
+
+    // 住民税（副業所得×10%）
+    const yearlyResident = Math.round(yearlyIncome * 0.10);
+
+    // 年次手取り
+    const yearlyNet  = Math.max(0, yearlyIncome - yearlyTax - yearlyResident);
+    const monthlyNet = Math.round(yearlyNet / 12);
+
+    // ── 表示更新 ──
+    // 月次
+    document.getElementById('r-monthly-gross').textContent   = fmt(monthlyGross)   + ' 円';
+    document.getElementById('r-monthly-expense').textContent = '- ' + fmt(monthlyExpense) + ' 円';
+    document.getElementById('r-monthly-income').textContent  = fmt(monthlyIncome)  + ' 円';
+    document.getElementById('r-monthly-net').textContent     = fmt(monthlyNet)     + ' 円';
+
+    // 年次
+    document.getElementById('r-yearly-gross').textContent    = fmt(yearlyGross)    + ' 円';
+    document.getElementById('r-yearly-tax').textContent      = '- ' + fmt(yearlyTax) + ' 円';
+    document.getElementById('r-yearly-resident').textContent = '- ' + fmt(yearlyResident) + ' 円';
+    document.getElementById('r-yearly-net').textContent      = fmt(yearlyNet)      + ' 円';
+
+    // 確定申告バナー（年20万円超で必要）
+    const need20 = yearlyIncome > 200000;
+    const banner = document.getElementById('taxBanner');
+    banner.className = 'tax-banner ' + (need20 ? 'required' : 'not-required');
+    document.getElementById('taxIcon').textContent = need20 ? '⚠️' : '✅';
+    document.getElementById('taxMain').textContent = need20
+      ? '確定申告が必要です'
+      : '確定申告は不要です';
+    document.getElementById('taxSub').textContent = need20
+      ? '副業の年間所得が20万円を超えています。翌年3月15日までに確定申告が必要です（給与所得者の場合）。'
+      : '副業の年間所得が20万円以下のため、確定申告は不要です（給与所得者の場合）。住民税の申告は市区町村に別途確認を。';
+
+    // まとめメッセージ
+    const msg = document.getElementById('summaryMsg');
+    if (monthlyGross === 0) {
+      msg.innerHTML = '入力すると結果が表示されます。';
+    } else {
+      const type = document.querySelector('#typeGroup .radio-label.selected').dataset.val;
+      const typeLabel = type === 'misc' ? '雑所得（副業）' : '事業所得（個人事業主）';
+      msg.innerHTML =
+        `月収 <span class="highlight-num">${fmt(monthlyGross)}</span> 円 × 12ヶ月 ＝ 年間 <span class="highlight-num">${fmt(yearlyGross)}</span> 円 が副業で増えます。<br>` +
+        `税金等を差し引いた年間手取りの概算は <span class="highlight-num">${fmt(yearlyNet)}</span> 円（月あたり <span class="highlight-num">${fmt(monthlyNet)}</span> 円）です。<br>` +
+        `<span style="color:var(--label);font-size:12px;">※ 所得区分：${typeLabel}　本業との合算は未考慮の簡易計算です。</span>`;
+    }
+  }
+
+  // ── 数値フォーマット ────────────────────────────
+  function fmt(n) {
+    return Math.round(n).toLocaleString('ja-JP');
+  }
+</script>
+</body>
+</html>
