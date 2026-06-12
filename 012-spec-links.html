@@ -335,38 +335,6 @@
   }
   .error-state strong { display: block; margin-bottom: 4px; font-size: 14px; }
 
-  /* ========== SETUP PROMPT ========== */
-  .setup-prompt {
-    background: var(--accent-light);
-    border: 1px solid var(--accent);
-    padding: 32px 28px;
-    text-align: center;
-  }
-  .setup-prompt h2 {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--accent);
-  }
-  .setup-prompt p {
-    font-size: 13px;
-    color: var(--text-sub);
-    margin-bottom: 20px;
-    line-height: 1.7;
-  }
-  .btn-primary {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 13px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 10px 28px;
-    cursor: pointer;
-    transition: background 0.2s;
-    letter-spacing: 0.03em;
-  }
-  .btn-primary:hover { background: #234a30; }
-
   /* ========== MODAL ========== */
   .overlay {
     display: none;
@@ -384,9 +352,7 @@
     border: 1px solid var(--border-strong);
     padding: 36px 40px;
     width: 100%;
-    max-width: 540px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 480px;
   }
   .modal h2 {
     font-size: 16px;
@@ -396,68 +362,73 @@
   .modal .modal-desc {
     font-size: 12px;
     color: var(--text-sub);
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     line-height: 1.7;
   }
-  .dept-row {
-    display: grid;
-    grid-template-columns: 100px 1fr 32px;
-    gap: 6px;
-    margin-bottom: 8px;
+
+  /* ========== DATA MANAGEMENT MENU ========== */
+  .data-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
   }
-  .dept-row input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    outline: none;
-    color: var(--text);
-    background: var(--bg);
+  .data-menu-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mute);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    margin-top: 8px;
   }
-  .dept-row input:focus { border-color: var(--accent); }
-  .dept-row .name-input {
+  .data-menu-section-label:first-child { margin-top: 0; }
+  .btn-sheet-link {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 13px;
-  }
-  .btn-remove {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border);
-    background: transparent;
-    cursor: pointer;
-    color: var(--text-mute);
-    font-size: 16px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    text-decoration: none;
     transition: all 0.2s;
-    padding: 0;
-    align-self: start;
+    cursor: pointer;
   }
-  .btn-remove:hover { color: var(--danger); border-color: var(--danger); }
-  .btn-add-dept {
-    font-family: 'Noto Sans JP', sans-serif;
+  .btn-sheet-link:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .btn-sheet-link .sheet-link-name {
+    font-weight: 500;
+  }
+  .btn-sheet-link .sheet-link-arrow {
     font-size: 12px;
-    padding: 7px 16px;
+    color: var(--text-mute);
+  }
+  .btn-reload {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    width: 100%;
+    padding: 10px 16px;
     border: 1px dashed var(--border-strong);
     background: transparent;
-    cursor: pointer;
     color: var(--text-sub);
-    margin-bottom: 20px;
+    cursor: pointer;
     transition: all 0.2s;
-    width: 100%;
+    letter-spacing: 0.03em;
+    text-align: left;
   }
-  .btn-add-dept:hover { color: var(--text); border-color: var(--text-sub); }
-  .modal-hint {
-    font-size: 11px;
-    color: var(--text-mute);
-    margin-bottom: 20px;
-    line-height: 1.6;
-    background: var(--tag-bg);
-    padding: 10px 12px;
+  .btn-reload:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
   }
-  .btn-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
   .btn {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 13px;
@@ -469,8 +440,6 @@
     color: var(--text);
   }
   .btn:hover { background: var(--tag-bg); }
-  .btn.danger { color: var(--danger); border-color: var(--danger); }
-  .btn.danger:hover { background: var(--danger-light); }
 
   /* ========== FOOTER ========== */
   .site-footer {
@@ -500,7 +469,6 @@
     .link-item { flex-wrap: wrap; gap: 6px; }
     .link-year { min-width: 0; }
     .modal { padding: 24px 20px; }
-    .dept-row { grid-template-columns: 80px 1fr 32px; }
   }
 </style>
 </head>
@@ -513,8 +481,8 @@
     <span class="title">参考図書リンク集</span>
   </div>
   <div class="header-right">
-    <span class="meta" id="headerMeta">v3.0</span>
-    <button class="btn-settings" onclick="openSettings()">設定</button>
+    <span class="meta" id="headerMeta">v4.0</span>
+    <button class="btn-settings" onclick="openDataMenu()">データ管理</button>
   </div>
 </header>
 
@@ -536,37 +504,52 @@
 </div>
 
 <footer class="site-footer">
-  arisa-tools — No.012 参考図書リンク集 v3.0 — データソース: Google Sheets
+  arisa-tools — No.012 参考図書リンク集 v4.0 — データソース: Google Sheets
 </footer>
 
-<!-- SETTINGS MODAL -->
-<div class="overlay" id="settingsOverlay">
+<!-- DATA MANAGEMENT MODAL -->
+<div class="overlay" id="dataMenuOverlay">
   <div class="modal">
-    <h2>部署設定</h2>
+    <h2>データ管理</h2>
     <div class="modal-desc">
-      部署ごとにCSV公開URLを設定してください。<br>
-      URLはこのブラウザにのみ保存されます。データは保存されません。
+      各部署のスプレッドシートを開いてデータを編集できます。<br>
+      編集後はデータを再読み込みしてください。
     </div>
-    <div id="deptList"></div>
-    <button class="btn-add-dept" onclick="addDeptRow()">＋ 部署を追加</button>
-    <div class="modal-hint">
-      取得方法: Googleスプレッドシート → ファイル → 共有 → ウェブに公開<br>
-      → 「リンク」タブ → 形式を「カンマ区切り形式（.csv）」に変更 → URLをコピー
+    <div class="data-menu">
+      <div class="data-menu-section-label">スプレッドシートを開く</div>
+      <a class="btn-sheet-link" id="sheetLinkSurvey" href="#" target="_blank" rel="noopener">
+        <span class="sheet-link-name">調査部のシートを開く</span>
+        <span class="sheet-link-arrow">外部リンク ↗</span>
+      </a>
+      <a class="btn-sheet-link" id="sheetLinkDesign" href="#" target="_blank" rel="noopener">
+        <span class="sheet-link-name">設計部のシートを開く</span>
+        <span class="sheet-link-arrow">外部リンク ↗</span>
+      </a>
+      <div class="data-menu-section-label">データ操作</div>
+      <button class="btn-reload" onclick="reloadAllData()">↺ データを再読み込み（全部署）</button>
     </div>
     <div class="btn-row">
-      <button class="btn" onclick="closeSettings()">キャンセル</button>
-      <button class="btn-primary" onclick="saveSettings()">保存して再読み込み</button>
+      <button class="btn" onclick="closeDataMenu()">閉じる</button>
     </div>
   </div>
 </div>
 
 <script>
-// ========== CONSTANTS ==========
-const DEPTS_KEY  = 'tl012_departments';
-const LEGACY_KEY = 'tl012_sheet_url';
+// ========== DEPARTMENTS (固定埋め込み) ==========
+const DEPARTMENTS = [
+  {
+    name: '調査部',
+    csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQAP8eFtZ-f47BXEXd7CqHAsOaaJ3tBazNn8mo_2sXAAdNy9tGeEqC8oMGtytvWkdYlcEsrnQa1adoh/pub?gid=273462702&single=true&output=csv',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/14C2HnL0fN7goBBw0UtlvCqt-LogNg9ZxuUxJWI2KXPQ/edit#gid=273462702'
+  },
+  {
+    name: '設計部',
+    csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQAP8eFtZ-f47BXEXd7CqHAsOaaJ3tBazNn8mo_2sXAAdNy9tGeEqC8oMGtytvWkdYlcEsrnQa1adoh/pub?gid=152440087&single=true&output=csv',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/14C2HnL0fN7goBBw0UtlvCqt-LogNg9ZxuUxJWI2KXPQ/edit#gid=152440087'
+  }
+];
 
 // ========== STATE ==========
-let departments    = [];   // [{name, url}]
 let currentDeptIdx = 0;
 let allRows        = [];
 let filteredSections = [];
@@ -586,28 +569,12 @@ const TAG_PALETTE = [
   { bg: '#fdeee8', color: '#6a2a1a' },
 ];
 
-// ========== DEPARTMENTS ==========
-function loadDepartments() {
-  const saved = localStorage.getItem(DEPTS_KEY);
-  if (saved) {
-    try { departments = JSON.parse(saved); } catch { departments = []; }
-  } else {
-    // 旧形式（単一URL）からマイグレーション
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy) {
-      departments = [{ name: '測量部', url: legacy }];
-      localStorage.setItem(DEPTS_KEY, JSON.stringify(departments));
-      localStorage.removeItem(LEGACY_KEY);
-    } else {
-      departments = [];
-    }
-  }
-  renderDeptBar();
-}
-
-function saveDepartments(depts) {
-  departments = depts;
-  localStorage.setItem(DEPTS_KEY, JSON.stringify(departments));
+// ========== DEPT BAR ==========
+function renderDeptBar() {
+  const bar = document.getElementById('deptBar');
+  bar.innerHTML = DEPARTMENTS.map((d, i) =>
+    `<button class="dept-btn ${i === currentDeptIdx ? 'active' : ''}" onclick="switchDept(${i})">${escHtml(d.name)}</button>`
+  ).join('');
 }
 
 function switchDept(idx) {
@@ -619,64 +586,20 @@ function switchDept(idx) {
   loadData();
 }
 
-function renderDeptBar() {
-  const bar = document.getElementById('deptBar');
-  if (!departments.length) { bar.innerHTML = ''; return; }
-  bar.innerHTML = departments.map((d, i) =>
-    `<button class="dept-btn ${i === currentDeptIdx ? 'active' : ''}" onclick="switchDept(${i})">${escHtml(d.name)}</button>`
-  ).join('');
+// ========== DATA MANAGEMENT MODAL ==========
+function openDataMenu() {
+  document.getElementById('sheetLinkSurvey').href = DEPARTMENTS[0].sheetUrl;
+  document.getElementById('sheetLinkDesign').href = DEPARTMENTS[1].sheetUrl;
+  document.getElementById('dataMenuOverlay').classList.add('active');
 }
 
-// ========== SETTINGS ==========
-function openSettings() {
-  renderDeptList();
-  document.getElementById('settingsOverlay').classList.add('active');
+function closeDataMenu() {
+  document.getElementById('dataMenuOverlay').classList.remove('active');
 }
 
-function closeSettings() {
-  document.getElementById('settingsOverlay').classList.remove('active');
-}
-
-function renderDeptList() {
-  const list = document.getElementById('deptList');
-  list.innerHTML = departments.map((d, i) => `
-    <div class="dept-row">
-      <input class="name-input" type="text" value="${escAttr(d.name)}" placeholder="部署名">
-      <input type="text" value="${escAttr(d.url)}" placeholder="CSV公開URL">
-      <button class="btn-remove" onclick="removeDeptRow(this)" title="削除">×</button>
-    </div>`).join('');
-}
-
-function addDeptRow() {
-  const list = document.getElementById('deptList');
-  const div = document.createElement('div');
-  div.className = 'dept-row';
-  div.innerHTML = `
-    <input class="name-input" type="text" value="" placeholder="部署名">
-    <input type="text" value="" placeholder="CSV公開URL">
-    <button class="btn-remove" onclick="removeDeptRow(this)" title="削除">×</button>`;
-  list.appendChild(div);
-}
-
-function removeDeptRow(btn) {
-  btn.closest('.dept-row').remove();
-}
-
-function saveSettings() {
-  const rows = document.getElementById('deptList').querySelectorAll('.dept-row');
-  const depts = [];
-  rows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    const name = inputs[0].value.trim() || '部署';
-    const url  = inputs[1].value.trim();
-    if (name || url) depts.push({ name, url });
-  });
-  saveDepartments(depts);
-  if (currentDeptIdx >= departments.length) currentDeptIdx = 0;
-  closeSettings();
-  renderDeptBar();
-  if (departments.length) loadData();
-  else renderSetupPrompt();
+function reloadAllData() {
+  closeDataMenu();
+  loadData();
 }
 
 // ========== CSV PARSE ==========
@@ -786,23 +709,11 @@ function tagStyle(tag) {
 
 // ========== LOAD ==========
 async function loadData() {
-  if (!departments.length) {
-    renderSetupPrompt();
-    setStatus('no-url', '');
-    return;
-  }
-
-  const dept = departments[currentDeptIdx];
-  if (!dept || !dept.url) {
-    renderSetupPrompt();
-    setStatus('no-url', 'URLが未設定です');
-    return;
-  }
-
+  const dept = DEPARTMENTS[currentDeptIdx];
   setStatus('loading', 'データを読み込んでいます…');
 
   try {
-    const res = await fetch(dept.url, { cache: 'no-cache' });
+    const res = await fetch(dept.csvUrl, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
 
@@ -954,25 +865,11 @@ function toggleSection(idx) {
   if (el) el.classList.toggle('collapsed');
 }
 
-function renderSetupPrompt() {
-  document.getElementById('tagTabs').style.display = 'none';
-  document.getElementById('viewArea').innerHTML = `
-    <div class="setup-prompt">
-      <h2>部署を設定してください</h2>
-      <p>
-        部署ごとにGoogle SheetsのCSV公開URLを設定してください。<br>
-        設定したURLはこのブラウザにのみ保存されます。
-      </p>
-      <button class="btn-primary" onclick="openSettings()">設定する</button>
-    </div>`;
-}
-
 function renderError(err) {
   document.getElementById('viewArea').innerHTML = `
     <div class="error-state">
       <strong>データの取得に失敗しました</strong>
       シートの公開設定（ウェブに公開 → CSV形式）を確認してください。<br>
-      また、URLが正しいかご確認ください。<br>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:6px;display:block;color:var(--text-mute);">${escHtml(String(err))}</span>
     </div>`;
 }
@@ -1015,7 +912,7 @@ function safeUrl(s) {
 }
 
 // ========== INIT ==========
-loadDepartments();
+renderDeptBar();
 loadData();
 </script>
 </body>
