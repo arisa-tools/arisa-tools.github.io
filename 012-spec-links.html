@@ -842,10 +842,10 @@ function renderTabs() {
   const tags = Object.keys(tagRegistry);
   if (!tags.length) { el.style.display = 'none'; return; }
 
-  let html = `<button class="tab-btn ${currentTag === 'all' ? 'active' : ''}" onclick="setActiveTag('all')">すべて</button>`;
+  let html = `<button class="tab-btn ${currentTag === 'all' ? 'active' : ''}" data-tag="all" onclick="setActiveTag(this.dataset.tag)">すべて</button>`;
   tags.forEach(tag => {
     const active = currentTag === tag ? 'active' : '';
-    html += `<button class="tab-btn ${active}" onclick="setActiveTag(${JSON.stringify(tag)})">${escHtml(tag)}</button>`;
+    html += `<button class="tab-btn ${active}" data-tag="${escAttr(tag)}" onclick="setActiveTag(this.dataset.tag)">${escHtml(tag)}</button>`;
   });
   el.innerHTML = html;
   el.style.display = 'flex';
