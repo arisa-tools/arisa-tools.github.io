@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>仕様書・準則リンク集</title>
+<title>参考図書リンク集</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
@@ -455,7 +455,7 @@
 <header class="site-header">
   <div class="logo">
     <span class="badge">No.012</span>
-    <span class="title">仕様書・準則リンク集</span>
+    <span class="title">参考図書リンク集</span>
   </div>
   <div class="header-right">
     <span class="meta" id="headerMeta">v2.0</span>
@@ -466,9 +466,9 @@
 <!-- MAIN -->
 <div class="main-wrap">
   <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="機関名・仕様書名で検索…" oninput="applyFilter()">
+    <input type="text" id="searchInput" placeholder="機関名・図書名で検索…" oninput="applyFilter()">
   </div>
-  <p class="tool-desc">測量関連仕様書・準則のリンクを素早く参照できます。</p>
+  <p class="tool-desc">測量関連参考図書・準則のリンクを素早く参照できます。</p>
   <div id="tagTabs" class="tag-tabs" style="display:none;"></div>
   <div class="status-bar">
     <span class="status-dot" id="statusDot"></span>
@@ -478,7 +478,7 @@
 </div>
 
 <footer class="site-footer">
-  arisa-tools — No.012 仕様書・準則リンク集 v2.0 — データソース: Google Sheets
+  arisa-tools — No.012 参考図書リンク集 v2.0 — データソース: Google Sheets
 </footer>
 
 <!-- SETTINGS MODAL -->
@@ -769,7 +769,7 @@ function renderView() {
 
   if (!filteredSections.length) {
     const q = document.getElementById('searchInput').value.trim();
-    area.innerHTML = `<div class="empty-state">${q ? `「${escHtml(q)}」に一致する仕様書が見つかりませんでした` : 'データがありません'}</div>`;
+    area.innerHTML = `<div class="empty-state">${q ? `「${escHtml(q)}」に一致する図書が見つかりませんでした` : 'データがありません'}</div>`;
     return;
   }
 
@@ -833,7 +833,7 @@ function renderSetupPrompt() {
     <div class="setup-prompt">
       <h2>シートURLを設定してください</h2>
       <p>
-        Google Sheetsで管理している仕様書データのCSV公開URLを設定すると、<br>
+        Google Sheetsで管理している図書データのCSV公開URLを設定すると、<br>
         ツールが自動でデータを読み込みます。<br>
         設定したURLはこのブラウザにのみ保存されます。
       </p>
