@@ -172,11 +172,32 @@
     padding: 2px 8px;
     letter-spacing: 0.05em;
   }
-  .tag-mlit       { background: #ddeeff; color: #1a4a7a; }
-  .tag-maff       { background: #ddf0e2; color: #1a5a2e; }
-  .tag-oita-civil { background: #fff0d8; color: #7a4a00; }
-  .tag-oita-agri  { background: #f0e8ff; color: #4a1a7a; }
-  .tag-custom     { background: var(--tag-bg); color: var(--text-sub); }
+  /* ========== TAG TABS ========== */
+  .tag-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tag-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-sub);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
 
   .section-name {
     font-size: 14px;
@@ -448,6 +469,7 @@
     <input type="text" id="searchInput" placeholder="機関名・仕様書名で検索…" oninput="applyFilter()">
   </div>
   <p class="tool-desc">測量関連仕様書・準則のリンクを素早く参照できます。</p>
+  <div id="tagTabs" class="tag-tabs" style="display:none;"></div>
   <div class="status-bar">
     <span class="status-dot" id="statusDot"></span>
     <span id="statusText">読み込み中...</span>
@@ -486,8 +508,24 @@
 const SHEET_URL_KEY = 'tl012_sheet_url';
 
 // ========== STATE ==========
-let allRows = [];   // CSVパース後の全行データ
+let allRows = [];          // CSVパース後の全行データ
 let filteredSections = [];
+let currentTag = 'all';    // 選択中のタグ（'all' or raw tag値）
+let tagRegistry = {};      // raw tag値 → { bg, color } のマップ
+
+// タグ自動配色パレット
+const TAG_PALETTE = [
+  { bg: '#ddeeff', color: '#1a4a7a' },
+  { bg: '#ddf0e2', color: '#1a5a2e' },
+  { bg: '#fff0d8', color: '#7a4a00' },
+  { bg: '#f0e8ff', color: '#4a1a7a' },
+  { bg: '#fde8e8', color: '#7a1a1a' },
+  { bg: '#e8f5fd', color: '#1a5a6a' },
+  { bg: '#fdf5e8', color: '#6a4a1a' },
+  { bg: '#e8fde8', color: '#1a6a2a' },
+  { bg: '#f5e8fd', color: '#5a1a6a' },
+  { bg: '#fdeee8', color: '#6a2a1a' },
+];
 
 // ========== SHEET URL ==========
 function getSheetUrl() {
@@ -581,7 +619,7 @@ function buildStructure(rows) {
     const year        = r[3] || '';
     const label       = r[4] || '';
     const pdfUrl      = r[5] || '';
-    const tagKey      = r[6] || 'custom';
+    const tagKey      = r[6] || 'その他';
 
     if (!sectionName) return;
 
@@ -589,7 +627,7 @@ function buildStructure(rows) {
     if (!sectionsMap.has(sectionName)) {
       sectionsMap.set(sectionName, {
         name: sectionName,
-        tag: normalizeTag(tagKey),
+        tag: tagKey || 'その他',
         groups: []
       });
     }
@@ -616,24 +654,26 @@ function buildStructure(rows) {
   return Array.from(sectionsMap.values());
 }
 
-function normalizeTag(raw) {
-  const map = {
-    'mlit': 'tag-mlit',
-    'maff': 'tag-maff',
-    'oita-civil': 'tag-oita-civil',
-    'oita-agri': 'tag-oita-agri',
-    'custom': 'tag-custom',
-  };
-  return map[raw] || 'tag-custom';
+// CSVデータからタグ一覧を収集し、パレットから色を自動割り当て
+function buildTagRegistry(sections) {
+  const seen = new Set();
+  const ordered = [];
+  sections.forEach(sec => {
+    if (!seen.has(sec.tag)) { seen.add(sec.tag); ordered.push(sec.tag); }
+  });
+  const reg = {};
+  ordered.forEach((tag, i) => {
+    reg[tag] = TAG_PALETTE[i % TAG_PALETTE.length];
+  });
+  return reg;
 }
 
-const TAG_LABEL = {
-  'tag-mlit': '国交省',
-  'tag-maff': '農水省',
-  'tag-oita-civil': '大分県土木',
-  'tag-oita-agri': '大分県農林',
-  'tag-custom': 'その他'
-};
+// タグのインラインスタイル文字列を返す
+function tagStyle(tag) {
+  const c = tagRegistry[tag];
+  if (!c) return `background:var(--tag-bg);color:var(--text-sub);`;
+  return `background:${c.bg};color:${c.color};`;
+}
 
 // ========== LOAD ==========
 async function loadData() {
@@ -663,6 +703,9 @@ async function loadData() {
     }
 
     allRows = buildStructure(rows);
+    tagRegistry = buildTagRegistry(allRows);
+    currentTag = 'all';
+    renderTabs();
     applyFilter();
     const count = rows.length - 1;
     setStatus('ok', `${count} 件読み込み完了`);
@@ -673,13 +716,36 @@ async function loadData() {
   }
 }
 
+// ========== TABS ==========
+function renderTabs() {
+  const el = document.getElementById('tagTabs');
+  const tags = Object.keys(tagRegistry);
+  if (!tags.length) { el.style.display = 'none'; return; }
+
+  let html = `<button class="tab-btn ${currentTag === 'all' ? 'active' : ''}" onclick="setActiveTag('all')">すべて</button>`;
+  tags.forEach(tag => {
+    const active = currentTag === tag ? 'active' : '';
+    html += `<button class="tab-btn ${active}" onclick="setActiveTag(${JSON.stringify(tag)})">${escHtml(tag)}</button>`;
+  });
+  el.innerHTML = html;
+  el.style.display = 'flex';
+}
+
+function setActiveTag(tag) {
+  currentTag = tag;
+  renderTabs();
+  applyFilter();
+}
+
 // ========== FILTER ==========
 function applyFilter() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
 
   if (!allRows.length) return;
 
-  filteredSections = allRows.map(sec => {
+  filteredSections = allRows.filter(sec => {
+    return currentTag === 'all' || sec.tag === currentTag;
+  }).map(sec => {
     const secMatch = sec.name.toLowerCase().includes(q);
     const filteredGroups = sec.groups.map(grp => {
       const grpMatch = grp.name.toLowerCase().includes(q);
@@ -709,7 +775,6 @@ function renderView() {
 
   let html = '';
   filteredSections.forEach((sec, si) => {
-    const tagLabel = TAG_LABEL[sec.tag] || 'その他';
     let groupsHtml = '';
 
     sec.groups.forEach(grp => {
@@ -744,7 +809,7 @@ function renderView() {
       <div class="section" id="section-${si}">
         <div class="section-header" onclick="toggleSection(${si})">
           <div class="section-title-wrap">
-            <span class="section-tag ${sec.tag}">${escHtml(tagLabel)}</span>
+            <span class="section-tag" style="${tagStyle(sec.tag)}">${escHtml(sec.tag)}</span>
             <span class="section-name">${escHtml(sec.name)}</span>
           </div>
           <span class="section-toggle">▾</span>
