@@ -89,6 +89,37 @@
   }
   .btn-settings:hover { border-color: #aaa; color: #fff; }
 
+  /* ========== DEPT BAR ========== */
+  .dept-bar {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    min-height: 44px;
+  }
+  .dept-bar::-webkit-scrollbar { display: none; }
+  .dept-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    padding: 12px 18px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-sub);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .dept-btn:hover { color: var(--text); }
+  .dept-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
   /* ========== MAIN LAYOUT ========== */
   .main-wrap {
     max-width: 860px;
@@ -115,6 +146,33 @@
   }
   .search-bar input:focus { border-color: var(--accent); }
   .search-bar input::placeholder { color: var(--text-mute); }
+
+  /* ========== TAG TABS ========== */
+  .tag-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tag-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-sub);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
 
   /* ========== STATUS BAR ========== */
   .status-bar {
@@ -172,33 +230,6 @@
     padding: 2px 8px;
     letter-spacing: 0.05em;
   }
-  /* ========== TAG TABS ========== */
-  .tag-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tag-tabs::-webkit-scrollbar { display: none; }
-  .tab-btn {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 12px;
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    color: var(--text-sub);
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    white-space: nowrap;
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
-
   .section-name {
     font-size: 14px;
     font-weight: 700;
@@ -211,15 +242,11 @@
   }
   .section.collapsed .section-toggle { transform: rotate(-90deg); }
   .section.collapsed .section-body { display: none; }
-
   .section-body { padding: 0; }
 
   /* ========== DOCUMENT GROUP ========== */
-  .doc-group {
-    border-bottom: 1px solid var(--border);
-  }
+  .doc-group { border-bottom: 1px solid var(--border); }
   .doc-group:last-child { border-bottom: none; }
-
   .doc-group-header {
     display: flex;
     align-items: center;
@@ -266,19 +293,6 @@
     color: var(--text);
     flex: 1;
   }
-  .link-page {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    text-decoration: none;
-    padding: 3px 10px;
-    border: 1px solid var(--accent);
-    letter-spacing: 0.03em;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .link-page:hover { background: var(--accent); color: #fff; }
   .link-pdf {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
@@ -289,12 +303,18 @@
     letter-spacing: 0.05em;
     transition: all 0.2s;
     flex-shrink: 0;
+    white-space: nowrap;
   }
   .link-pdf:hover { background: var(--accent2); color: #fff; }
-  .link-pdf.no-link {
+  .link-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
     color: var(--text-mute);
-    border-color: var(--border);
-    pointer-events: none;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   /* ========== EMPTY / ERROR STATES ========== */
@@ -359,13 +379,14 @@
     padding: 20px;
   }
   .overlay.active { display: flex; }
-
   .modal {
     background: var(--surface);
     border: 1px solid var(--border-strong);
     padding: 36px 40px;
     width: 100%;
-    max-width: 480px;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .modal h2 {
     font-size: 16px;
@@ -378,24 +399,56 @@
     margin-bottom: 20px;
     line-height: 1.7;
   }
-  .modal label {
-    display: block;
-    font-size: 11px;
-    color: var(--text-sub);
-    margin-bottom: 4px;
+  .dept-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 32px;
+    gap: 6px;
+    margin-bottom: 8px;
   }
-  .modal input {
+  .dept-row input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 1px solid var(--border);
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    margin-bottom: 8px;
     outline: none;
     color: var(--text);
     background: var(--bg);
   }
-  .modal input:focus { border-color: var(--accent); }
+  .dept-row input:focus { border-color: var(--accent); }
+  .dept-row .name-input {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+  }
+  .btn-remove {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-mute);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    align-self: start;
+  }
+  .btn-remove:hover { color: var(--danger); border-color: var(--danger); }
+  .btn-add-dept {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    padding: 7px 16px;
+    border: 1px dashed var(--border-strong);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-sub);
+    margin-bottom: 20px;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn-add-dept:hover { color: var(--text); border-color: var(--text-sub); }
   .modal-hint {
     font-size: 11px;
     color: var(--text-mute);
@@ -442,10 +495,12 @@
   @media (max-width: 600px) {
     .site-header { padding: 0 14px; }
     .site-header .title { font-size: 13px; }
+    .dept-bar { padding: 0 14px; }
     .main-wrap { padding: 20px 14px 60px; }
     .link-item { flex-wrap: wrap; gap: 6px; }
     .link-year { min-width: 0; }
     .modal { padding: 24px 20px; }
+    .dept-row { grid-template-columns: 80px 1fr 32px; }
   }
 </style>
 </head>
@@ -462,6 +517,9 @@
     <button class="btn-settings" onclick="openSettings()">設定</button>
   </div>
 </header>
+
+<!-- DEPT BAR -->
+<nav class="dept-bar" id="deptBar"></nav>
 
 <!-- MAIN -->
 <div class="main-wrap">
@@ -484,19 +542,18 @@
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="settingsOverlay">
   <div class="modal">
-    <h2>シートURL設定</h2>
+    <h2>部署設定</h2>
     <div class="modal-desc">
-      Google Sheets を「ウェブに公開（CSV形式）」して取得したURLを入力してください。<br>
-      URLはこのブラウザのみに保存されます。データは保存されません。
+      部署ごとにCSV公開URLを設定してください。<br>
+      URLはこのブラウザにのみ保存されます。データは保存されません。
     </div>
-    <label>CSV公開URL</label>
-    <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+    <div id="deptList"></div>
+    <button class="btn-add-dept" onclick="addDeptRow()">＋ 部署を追加</button>
     <div class="modal-hint">
       取得方法: Googleスプレッドシート → ファイル → 共有 → ウェブに公開<br>
       → 「リンク」タブ → 形式を「カンマ区切り形式（.csv）」に変更 → URLをコピー
     </div>
     <div class="btn-row">
-      <button class="btn danger" onclick="clearSettings()">URLをクリア</button>
       <button class="btn" onclick="closeSettings()">キャンセル</button>
       <button class="btn-primary" onclick="saveSettings()">保存して再読み込み</button>
     </div>
@@ -505,15 +562,17 @@
 
 <script>
 // ========== CONSTANTS ==========
-const SHEET_URL_KEY = 'tl012_sheet_url';
+const DEPTS_KEY  = 'tl012_departments';
+const LEGACY_KEY = 'tl012_sheet_url';
 
 // ========== STATE ==========
-let allRows = [];          // CSVパース後の全行データ
+let departments    = [];   // [{name, url}]
+let currentDeptIdx = 0;
+let allRows        = [];
 let filteredSections = [];
-let currentTag = 'all';    // 選択中のタグ（'all' or raw tag値）
-let tagRegistry = {};      // raw tag値 → { bg, color } のマップ
+let currentTag     = 'all';
+let tagRegistry    = {};
 
-// タグ自動配色パレット
 const TAG_PALETTE = [
   { bg: '#ddeeff', color: '#1a4a7a' },
   { bg: '#ddf0e2', color: '#1a5a2e' },
@@ -527,13 +586,50 @@ const TAG_PALETTE = [
   { bg: '#fdeee8', color: '#6a2a1a' },
 ];
 
-// ========== SHEET URL ==========
-function getSheetUrl() {
-  return localStorage.getItem(SHEET_URL_KEY) || '';
+// ========== DEPARTMENTS ==========
+function loadDepartments() {
+  const saved = localStorage.getItem(DEPTS_KEY);
+  if (saved) {
+    try { departments = JSON.parse(saved); } catch { departments = []; }
+  } else {
+    // 旧形式（単一URL）からマイグレーション
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy) {
+      departments = [{ name: '測量部', url: legacy }];
+      localStorage.setItem(DEPTS_KEY, JSON.stringify(departments));
+      localStorage.removeItem(LEGACY_KEY);
+    } else {
+      departments = [];
+    }
+  }
+  renderDeptBar();
 }
 
+function saveDepartments(depts) {
+  departments = depts;
+  localStorage.setItem(DEPTS_KEY, JSON.stringify(departments));
+}
+
+function switchDept(idx) {
+  currentDeptIdx = idx;
+  currentTag = 'all';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('tagTabs').style.display = 'none';
+  renderDeptBar();
+  loadData();
+}
+
+function renderDeptBar() {
+  const bar = document.getElementById('deptBar');
+  if (!departments.length) { bar.innerHTML = ''; return; }
+  bar.innerHTML = departments.map((d, i) =>
+    `<button class="dept-btn ${i === currentDeptIdx ? 'active' : ''}" onclick="switchDept(${i})">${escHtml(d.name)}</button>`
+  ).join('');
+}
+
+// ========== SETTINGS ==========
 function openSettings() {
-  document.getElementById('sheetUrlInput').value = getSheetUrl();
+  renderDeptList();
   document.getElementById('settingsOverlay').classList.add('active');
 }
 
@@ -541,23 +637,49 @@ function closeSettings() {
   document.getElementById('settingsOverlay').classList.remove('active');
 }
 
-function saveSettings() {
-  const url = document.getElementById('sheetUrlInput').value.trim();
-  localStorage.setItem(SHEET_URL_KEY, url);
-  closeSettings();
-  loadData();
+function renderDeptList() {
+  const list = document.getElementById('deptList');
+  list.innerHTML = departments.map((d, i) => `
+    <div class="dept-row">
+      <input class="name-input" type="text" value="${escAttr(d.name)}" placeholder="部署名">
+      <input type="text" value="${escAttr(d.url)}" placeholder="CSV公開URL">
+      <button class="btn-remove" onclick="removeDeptRow(this)" title="削除">×</button>
+    </div>`).join('');
 }
 
-function clearSettings() {
-  if (!confirm('シートURLをクリアしますか？')) return;
-  localStorage.removeItem(SHEET_URL_KEY);
-  document.getElementById('sheetUrlInput').value = '';
+function addDeptRow() {
+  const list = document.getElementById('deptList');
+  const div = document.createElement('div');
+  div.className = 'dept-row';
+  div.innerHTML = `
+    <input class="name-input" type="text" value="" placeholder="部署名">
+    <input type="text" value="" placeholder="CSV公開URL">
+    <button class="btn-remove" onclick="removeDeptRow(this)" title="削除">×</button>`;
+  list.appendChild(div);
+}
+
+function removeDeptRow(btn) {
+  btn.closest('.dept-row').remove();
+}
+
+function saveSettings() {
+  const rows = document.getElementById('deptList').querySelectorAll('.dept-row');
+  const depts = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const name = inputs[0].value.trim() || '部署';
+    const url  = inputs[1].value.trim();
+    if (name || url) depts.push({ name, url });
+  });
+  saveDepartments(depts);
+  if (currentDeptIdx >= departments.length) currentDeptIdx = 0;
   closeSettings();
-  loadData();
+  renderDeptBar();
+  if (departments.length) loadData();
+  else renderSetupPrompt();
 }
 
 // ========== CSV PARSE ==========
-// RFC 4180準拠のシンプルなCSVパーサー
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -595,47 +717,38 @@ function parseCSV(text) {
     }
     i++;
   }
-  // 最終行
   row.push(field.trim());
   if (row.some(f => f !== '')) rows.push(row);
-
   return rows;
 }
 
 // ========== BUILD STRUCTURE ==========
-// CSV行をsection > group > link の階層に変換
-// 列: A=section, B=group, C=page_url, D=year, E=label, F=pdf_url, G=tag
+// 列: A=ai_flag, B=tag, C=section, D=group, E=page_url, F=label, G=year, H=pdf_url
 function buildStructure(rows) {
-  // ヘッダー行をスキップ
-  const dataRows = rows.slice(1).filter(r => r.length >= 5 && r[0]);
+  const dataRows = rows.slice(1).filter(r => r.length >= 4 && r[2]);
 
-  const sectionsMap = new Map(); // section名 → sectionオブジェクト
-  const groupsMap = new Map();   // "section::group" → groupオブジェクト
+  const sectionsMap = new Map();
+  const groupsMap   = new Map();
 
   dataRows.forEach(r => {
-    const sectionName = r[0] || '';
-    const groupName   = r[1] || '';
-    const pageUrl     = r[2] || '';
-    const year        = r[3] || '';
-    const label       = r[4] || '';
-    const pdfUrl      = r[5] || '';
-    const tagKey      = r[6] || 'その他';
+    // r[0] = ai_flag（Gemini管理用・UI非表示）
+    const tagKey      = r[1] || 'その他';
+    const sectionName = r[2] || '';
+    const groupName   = r[3] || '';
+    const pageUrl     = r[4] || '';
+    const label       = r[5] || '';
+    const year        = r[6] || '';
+    const pdfUrl      = r[7] || '';
 
     if (!sectionName) return;
 
-    // セクション
     if (!sectionsMap.has(sectionName)) {
-      sectionsMap.set(sectionName, {
-        name: sectionName,
-        tag: tagKey || 'その他',
-        groups: []
-      });
+      sectionsMap.set(sectionName, { name: sectionName, tag: tagKey, groups: [] });
     }
     const section = sectionsMap.get(sectionName);
 
     if (!groupName) return;
 
-    // グループ
     const grpKey = sectionName + '::' + groupName;
     if (!groupsMap.has(grpKey)) {
       const grp = { name: groupName, pageUrl, links: [] };
@@ -643,10 +756,9 @@ function buildStructure(rows) {
       section.groups.push(grp);
     }
     const group = groupsMap.get(grpKey);
-    // page_urlは最初に登場したもの（複数行に同じグループが続く場合も同一とみなす）
     if (!group.pageUrl && pageUrl) group.pageUrl = pageUrl;
 
-    if (year || label) {
+    if (year || label || pdfUrl) {
       group.links.push({ year, label, pdfUrl });
     }
   });
@@ -654,7 +766,7 @@ function buildStructure(rows) {
   return Array.from(sectionsMap.values());
 }
 
-// CSVデータからタグ一覧を収集し、パレットから色を自動割り当て
+// ========== TAG REGISTRY ==========
 function buildTagRegistry(sections) {
   const seen = new Set();
   const ordered = [];
@@ -662,13 +774,10 @@ function buildTagRegistry(sections) {
     if (!seen.has(sec.tag)) { seen.add(sec.tag); ordered.push(sec.tag); }
   });
   const reg = {};
-  ordered.forEach((tag, i) => {
-    reg[tag] = TAG_PALETTE[i % TAG_PALETTE.length];
-  });
+  ordered.forEach((tag, i) => { reg[tag] = TAG_PALETTE[i % TAG_PALETTE.length]; });
   return reg;
 }
 
-// タグのインラインスタイル文字列を返す
 function tagStyle(tag) {
   const c = tagRegistry[tag];
   if (!c) return `background:var(--tag-bg);color:var(--text-sub);`;
@@ -677,28 +786,35 @@ function tagStyle(tag) {
 
 // ========== LOAD ==========
 async function loadData() {
-  const url = getSheetUrl();
-
-  if (!url) {
+  if (!departments.length) {
     renderSetupPrompt();
     setStatus('no-url', '');
+    return;
+  }
+
+  const dept = departments[currentDeptIdx];
+  if (!dept || !dept.url) {
+    renderSetupPrompt();
+    setStatus('no-url', 'URLが未設定です');
     return;
   }
 
   setStatus('loading', 'データを読み込んでいます…');
 
   try {
-    // CORS対策: Google Sheets CSV公開URLはno-corsでは使えないため直接fetchする
-    // （GAS経由の場合も同じ方法）
-    const res = await fetch(url, { cache: 'no-cache' });
+    const res = await fetch(dept.url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
+
+    const lastMod = res.headers.get('Last-Modified');
+    const updatedAt = lastMod ? formatDate(new Date(lastMod)) : null;
+
     const rows = parseCSV(text);
 
     if (rows.length <= 1) {
       allRows = [];
       renderEmpty('シートにデータがありません');
-      setStatus('ok', 'データなし');
+      setStatus('ok', 'データなし', updatedAt);
       return;
     }
 
@@ -707,13 +823,17 @@ async function loadData() {
     currentTag = 'all';
     renderTabs();
     applyFilter();
-    const count = rows.length - 1;
-    setStatus('ok', `${count} 件読み込み完了`);
+    setStatus('ok', `${rows.length - 1} 件読み込み完了`, updatedAt);
   } catch (e) {
     allRows = [];
     renderError(e);
     setStatus('err', 'データ取得失敗');
   }
+}
+
+function formatDate(d) {
+  if (!d || isNaN(d)) return null;
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} 更新`;
 }
 
 // ========== TABS ==========
@@ -740,27 +860,36 @@ function setActiveTag(tag) {
 // ========== FILTER ==========
 function applyFilter() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
-
   if (!allRows.length) return;
 
-  filteredSections = allRows.filter(sec => {
-    return currentTag === 'all' || sec.tag === currentTag;
-  }).map(sec => {
-    const secMatch = sec.name.toLowerCase().includes(q);
-    const filteredGroups = sec.groups.map(grp => {
-      const grpMatch = grp.name.toLowerCase().includes(q);
-      const linkMatch = grp.links.some(l =>
-        l.year.toLowerCase().includes(q) || l.label.toLowerCase().includes(q)
-      );
-      if (q && !secMatch && !grpMatch && !linkMatch) return null;
-      return grp;
+  filteredSections = allRows
+    .filter(sec => currentTag === 'all' || sec.tag === currentTag)
+    .map(sec => {
+      const secMatch = sec.name.toLowerCase().includes(q);
+      const filteredGroups = sec.groups.map(grp => {
+        const grpMatch  = grp.name.toLowerCase().includes(q);
+        const linkMatch = grp.links.some(l =>
+          l.year.toLowerCase().includes(q) || l.label.toLowerCase().includes(q)
+        );
+        if (q && !secMatch && !grpMatch && !linkMatch) return null;
+        return grp;
+      }).filter(Boolean);
+      if (q && !secMatch && !filteredGroups.length) return null;
+      return { ...sec, groups: filteredGroups };
     }).filter(Boolean);
 
-    if (q && !secMatch && !filteredGroups.length) return null;
-    return { ...sec, groups: filteredGroups };
-  }).filter(Boolean);
-
   renderView();
+}
+
+// ========== PDF BUTTON ==========
+function renderPdfBtn(pdfUrl) {
+  if (!pdfUrl) {
+    return `<span class="link-badge">未登録</span>`;
+  }
+  if (/^https?:\/\//i.test(pdfUrl)) {
+    return `<a class="link-pdf" href="${escAttr(safeUrl(pdfUrl))}" target="_blank" rel="noopener">PDF</a>`;
+  }
+  return `<span class="link-badge">${escHtml(pdfUrl)}</span>`;
 }
 
 // ========== RENDER ==========
@@ -780,14 +909,11 @@ function renderView() {
     sec.groups.forEach(grp => {
       let linksHtml = '';
       grp.links.forEach(lnk => {
-        const pageBtn = lnk.pdfUrl
-          ? `<a class="link-pdf" href="${escAttr(safeUrl(lnk.pdfUrl))}" target="_blank" rel="noopener">PDF</a>`
-          : `<span class="link-pdf no-link">PDF未登録</span>`;
         linksHtml += `
           <div class="link-item">
             <span class="link-year">${escHtml(lnk.year)}</span>
             <span class="link-label">${escHtml(lnk.label)}</span>
-            ${pageBtn}
+            ${renderPdfBtn(lnk.pdfUrl)}
           </div>`;
       });
 
@@ -829,15 +955,15 @@ function toggleSection(idx) {
 }
 
 function renderSetupPrompt() {
+  document.getElementById('tagTabs').style.display = 'none';
   document.getElementById('viewArea').innerHTML = `
     <div class="setup-prompt">
-      <h2>シートURLを設定してください</h2>
+      <h2>部署を設定してください</h2>
       <p>
-        Google Sheetsで管理している図書データのCSV公開URLを設定すると、<br>
-        ツールが自動でデータを読み込みます。<br>
+        部署ごとにGoogle SheetsのCSV公開URLを設定してください。<br>
         設定したURLはこのブラウザにのみ保存されます。
       </p>
-      <button class="btn-primary" onclick="openSettings()">URLを設定する</button>
+      <button class="btn-primary" onclick="openSettings()">設定する</button>
     </div>`;
 }
 
@@ -856,20 +982,21 @@ function renderEmpty(msg) {
 }
 
 // ========== STATUS ==========
-function setStatus(type, text) {
-  const dot = document.getElementById('statusDot');
+function setStatus(type, text, updatedAt) {
+  const dot   = document.getElementById('statusDot');
   const label = document.getElementById('statusText');
   dot.className = 'status-dot';
-  if (type === 'ok')      { dot.classList.add('ok');      }
-  if (type === 'err')     { dot.classList.add('err');     }
-  if (type === 'loading') { dot.classList.add('loading'); }
-  label.textContent = text;
+  if (type === 'ok')      dot.classList.add('ok');
+  if (type === 'err')     dot.classList.add('err');
+  if (type === 'loading') dot.classList.add('loading');
 
-  // ヘッダーメタ更新
   if (type === 'ok') {
     const now = new Date();
-    const ts = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} 更新`;
+    const ts  = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} 取得`;
     document.getElementById('headerMeta').textContent = ts;
+    label.textContent = updatedAt ? `${text} — シート: ${updatedAt}` : `${text} — ${ts}`;
+  } else {
+    label.textContent = text;
   }
 }
 
@@ -888,6 +1015,7 @@ function safeUrl(s) {
 }
 
 // ========== INIT ==========
+loadDepartments();
 loadData();
 </script>
 </body>
