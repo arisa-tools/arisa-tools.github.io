@@ -345,7 +345,7 @@
 <div class="header">
   <div class="badge-row">
     <span class="badge">No.017</span>
-    <span class="version">v1.0</span>
+    <span class="version">v1.1</span>
   </div>
   <div class="title">度分秒⇔十進法度 変換ツール</div>
   <div class="desc">TS観測値・座標データの角度表記をまとめて相互変換（複数件一括対応）</div>
@@ -495,7 +495,8 @@ function addRowC2D() {
 
 // ── 変換ロジック ──
 function dmsToDecimal(deg, min, sec) {
-  const sign = deg < 0 ? -1 : 1;
+  // deg===-0（負のゼロ）は `deg < 0` が false になるJS仕様のため、Object.isで別途判定する
+  const sign = (deg < 0 || Object.is(deg, -0)) ? -1 : 1;
   const absDeg = Math.abs(deg);
   return sign * (absDeg + min / 60 + sec / 3600);
 }
@@ -517,7 +518,20 @@ function decimalToDms(value) {
 }
 
 function formatDms(deg, min, sec) {
-  return `${deg}°${String(min).padStart(2,'0')}′${sec.toFixed(2).padStart(5,'0')}″`;
+  // 秒をtoFixed(2)で丸めた結果60.00になる境界値（例：59.995〜59.999）を
+  // 分・度へ繰り上げる（-0度表記の符号も保持する）
+  let s = Math.round(sec * 100) / 100;
+  let m = min;
+  const isNegZero = (deg === '-0') || Object.is(deg, -0);
+  const negative = isNegZero || Number(deg) < 0;
+  let dAbs = Math.abs(isNegZero ? 0 : Number(deg));
+
+  if (s >= 60) { s -= 60; m += 1; }
+  if (m >= 60) { m -= 60; dAbs += 1; }
+
+  const degOut = negative ? (dAbs === 0 ? '-0' : -dAbs) : dAbs;
+
+  return `${degOut}°${String(m).padStart(2,'0')}′${s.toFixed(2).padStart(5,'0')}″`;
 }
 
 // ── 度分秒→十進法度：計算 ──
