@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>座標計算ツール v1.0 | Aiaこんぶ</title>
+<title>座標計算ツール v2.0 | Aiaこんぶ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -40,7 +40,7 @@
   /* ── ヘッダー ── */
   .header {
     text-align: center;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     padding-top: 12px;
   }
 
@@ -66,6 +66,43 @@
     display: inline-block;
     margin-top: 6px;
   }
+
+  .header .tool-desc-header {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ── タブ ── */
+  .tab-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .tab-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 11px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .mode-content { display: none; }
+  .mode-content.active { display: block; }
 
   /* ── カード ── */
   .card {
@@ -189,6 +226,22 @@
 
   .btn-secondary:hover { color: var(--text); border-color: var(--text-dim); }
 
+  .btn-add-row {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.2s;
+  }
+
+  .btn-add-row:hover { color: var(--accent); border-color: var(--accent); }
+
   /* ── 結果表示 ── */
   .result-card {
     background: var(--surface);
@@ -282,6 +335,70 @@
     font-size: 16px;
   }
 
+  /* ── 連続計算：観測行カード ── */
+  .traverse-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .trav-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .trav-row-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .trav-row-del {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--danger);
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    line-height: 1;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .trav-row-del:hover:not(:disabled) { border-color: var(--danger); }
+
+  .trav-row-del:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .traverse-row .input-row { margin-bottom: 0; }
+
+  /* ── 補足ノート ── */
+  .note-box {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    padding: 10px 12px;
+    border-left: 3px solid var(--accent2);
+    background: var(--surface2);
+    border-radius: 6px;
+  }
+
+  .note-box a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .note-box a:hover { text-decoration: underline; }
+
   /* ── エラー ── */
   .error-msg {
     color: var(--danger);
@@ -309,6 +426,7 @@
   @media (max-width: 400px) {
     body { padding: 12px; }
     .result-value { font-size: 18px; }
+    .tab-btn { font-size: 12px; padding: 10px 0; }
   }
 </style>
 </head>
@@ -319,102 +437,268 @@
   <div class="header">
     <div class="header-icon">📐</div>
     <h1>座標計算ツール</h1>
-    <span class="version">v1.1</span>
+    <span class="version">v2.0</span>
+    <div class="tool-desc-header">2点座標の逆計算・放射計算（順計算）・連続観測点のトラバース計算（連続計算）に対応</div>
 
     <!-- オプション -->
     <div style="margin-top:12px; text-align:center;">
       <button class="toggle-btn" id="optionToggle" onclick="toggleOption()" style="padding:5px 18px;">⚙ オプション</button>
-      <div id="optionPanel" style="display:none; margin-top:10px; display:none; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
-        <span style="font-size:11px; color:var(--label);">小数点桁数</span>
-        <button class="toggle-btn" id="dec-2" onclick="setDecimal(2)">2</button>
-        <button class="toggle-btn" id="dec-3" onclick="setDecimal(3)">3</button>
-        <button class="toggle-btn active" id="dec-4" onclick="setDecimal(4)">4</button>
-        <button class="toggle-btn" id="dec-5" onclick="setDecimal(5)">5</button>
-        <button class="toggle-btn" id="dec-6" onclick="setDecimal(6)">6</button>
+      <div id="optionPanel" style="display:none; margin-top:10px; flex-direction:column; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
+          <span style="font-size:11px; color:var(--label);">小数点桁数</span>
+          <button class="toggle-btn" id="dec-2" onclick="setDecimal(2)">2</button>
+          <button class="toggle-btn" id="dec-3" onclick="setDecimal(3)">3</button>
+          <button class="toggle-btn active" id="dec-4" onclick="setDecimal(4)">4</button>
+          <button class="toggle-btn" id="dec-5" onclick="setDecimal(5)">5</button>
+          <button class="toggle-btn" id="dec-6" onclick="setDecimal(6)">6</button>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
+          <span style="font-size:11px; color:var(--label);">方位角入力形式</span>
+          <button class="toggle-btn active" id="azfmt-dms" onclick="setAzimuthFormat('dms')">度分秒</button>
+          <button class="toggle-btn" id="azfmt-deg" onclick="setAzimuthFormat('deg')">10進度</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 入力カード -->
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>座標入力（平面直角座標系）</div>
+  <!-- モード切替タブ -->
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-inverse" onclick="setTab('inverse')">逆計算</button>
+    <button class="tab-btn" id="tab-forward" onclick="setTab('forward')">順計算</button>
+    <button class="tab-btn" id="tab-traverse" onclick="setTab('traverse')">連続計算</button>
+  </div>
 
-    <div class="point-label">P1 — 始点</div>
-    <div class="input-row">
-      <div class="input-group">
-        <label>X（北方向）</label>
-        <input type="text" id="x1" inputmode="decimal" placeholder="-12345.678">
+  <!-- ═══════════ モード1：逆計算 ═══════════ -->
+  <div class="mode-content active" id="mode-inverse">
+    <!-- 入力カード -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>座標入力（平面直角座標系）</div>
+
+      <div class="point-label">P1 — 始点</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>X（北方向）</label>
+          <input type="text" id="x1" inputmode="decimal" placeholder="-12345.678">
+        </div>
+        <div class="input-group">
+          <label>Y（東方向）</label>
+          <input type="text" id="y1" inputmode="decimal" placeholder="67890.123">
+        </div>
       </div>
-      <div class="input-group">
-        <label>Y（東方向）</label>
-        <input type="text" id="y1" inputmode="decimal" placeholder="67890.123">
+
+      <div class="point-label p2">P2 — 終点</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>X（北方向）</label>
+          <input type="text" id="x2" inputmode="decimal" placeholder="-12300.000">
+        </div>
+        <div class="input-group">
+          <label>Y（東方向）</label>
+          <input type="text" id="y2" inputmode="decimal" placeholder="67900.000">
+        </div>
+      </div>
+
+      <div class="error-msg" id="error"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calculate()">計算する</button>
+        <button class="btn btn-secondary" onclick="clearAll()">クリア</button>
       </div>
     </div>
 
-    <div class="point-label p2">P2 — 終点</div>
-    <div class="input-row">
-      <div class="input-group">
-        <label>X（北方向）</label>
-        <input type="text" id="x2" inputmode="decimal" placeholder="-12300.000">
-      </div>
-      <div class="input-group">
-        <label>Y（東方向）</label>
-        <input type="text" id="y2" inputmode="decimal" placeholder="67900.000">
-      </div>
-    </div>
+    <!-- 結果カード -->
+    <div class="result-card" id="result">
+      <div class="card-title"><span class="dot"></span>計算結果</div>
 
-    <div class="error-msg" id="error"></div>
+      <!-- 距離 -->
+      <div class="result-item">
+        <div class="result-label">水平距離</div>
+        <div class="result-value" id="distance">—</div>
+      </div>
 
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="calculate()">計算する</button>
-      <button class="btn btn-secondary" onclick="clearAll()">クリア</button>
+      <!-- 方位角 -->
+      <div class="result-item">
+        <div class="result-label">方位角（P1 → P2）</div>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="btn-dms" onclick="setMode('dms')">度分秒</button>
+          <button class="toggle-btn" id="btn-deg" onclick="setMode('deg')">10進度</button>
+        </div>
+        <div class="result-value" id="azimuth">—</div>
+        <div class="result-sub" id="azimuth-sub"></div>
+      </div>
+
+      <!-- ΔX, ΔY -->
+      <div class="result-item">
+        <div class="result-label">座標差</div>
+        <div class="diff-row">
+          <div class="diff-item">
+            <div class="result-value" id="dx">—</div>
+          </div>
+          <div class="diff-item">
+            <div class="result-value" id="dy">—</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 結果カード -->
-  <div class="result-card" id="result">
-    <div class="card-title"><span class="dot"></span>計算結果</div>
+  <!-- ═══════════ モード2：順計算（放射計算） ═══════════ -->
+  <div class="mode-content" id="mode-forward">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>既知点・観測値入力</div>
 
-    <!-- 距離 -->
-    <div class="result-item">
-      <div class="result-label">水平距離</div>
-      <div class="result-value" id="distance">—</div>
-    </div>
-
-    <!-- 方位角 -->
-    <div class="result-item">
-      <div class="result-label">方位角（P1 → P2）</div>
-      <div class="toggle-row">
-        <button class="toggle-btn active" id="btn-dms" onclick="setMode('dms')">度分秒</button>
-        <button class="toggle-btn" id="btn-deg" onclick="setMode('deg')">10進度</button>
+      <div class="point-label">既知点</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>X0（北方向）</label>
+          <input type="text" id="fx0" inputmode="decimal" placeholder="-12345.678">
+        </div>
+        <div class="input-group">
+          <label>Y0（東方向）</label>
+          <input type="text" id="fy0" inputmode="decimal" placeholder="67890.123">
+        </div>
       </div>
-      <div class="result-value" id="azimuth">—</div>
-      <div class="result-sub" id="azimuth-sub"></div>
+
+      <div class="point-label p2">観測値</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>距離 D（m）</label>
+          <input type="text" id="fdist" inputmode="decimal" placeholder="45.678">
+        </div>
+        <div class="input-group">
+          <label id="faz-label">方位角（度分秒）</label>
+          <input type="text" id="faz" placeholder="135-30-15">
+        </div>
+      </div>
+
+      <div class="error-msg" id="error-fwd"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calculateForward()">計算する</button>
+        <button class="btn btn-secondary" onclick="clearForward()">クリア</button>
+      </div>
     </div>
 
-    <!-- ΔX, ΔY -->
-    <div class="result-item">
-      <div class="result-label">座標差</div>
+    <div class="result-card" id="result-fwd">
+      <div class="card-title"><span class="dot"></span>求点座標</div>
       <div class="diff-row">
         <div class="diff-item">
-          <div class="result-value" id="dx">—</div>
+          <div class="result-label">X（求点）</div>
+          <div class="result-value" id="fwd-x">—</div>
         </div>
         <div class="diff-item">
-          <div class="result-value" id="dy">—</div>
+          <div class="result-label">Y（求点）</div>
+          <div class="result-value" id="fwd-y">—</div>
         </div>
+      </div>
+      <div class="result-sub" id="fwd-sub"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ モード3：連続計算（トラバース） ═══════════ -->
+  <div class="mode-content" id="mode-traverse">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>起点座標</div>
+      <div class="input-row" style="margin-bottom:0;">
+        <div class="input-group">
+          <label>X0（北方向）</label>
+          <input type="text" id="trav-x0" inputmode="decimal" placeholder="-12345.678">
+        </div>
+        <div class="input-group">
+          <label>Y0（東方向）</label>
+          <input type="text" id="trav-y0" inputmode="decimal" placeholder="67890.123">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>観測データ（距離・方位角）</div>
+      <div id="traverseRows"></div>
+      <button class="btn-add-row" onclick="addTraverseRow()">＋ 観測行を追加</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>終点 既知座標（任意）</div>
+      <div class="input-row" style="margin-bottom:0;">
+        <div class="input-group">
+          <label>Xn（北方向）</label>
+          <input type="text" id="trav-xn" inputmode="decimal" placeholder="未入力可">
+        </div>
+        <div class="input-group">
+          <label>Yn（東方向）</label>
+          <input type="text" id="trav-yn" inputmode="decimal" placeholder="未入力可">
+        </div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="error-trav"></div>
+
+    <div class="btn-row" style="margin-bottom:16px;">
+      <button class="btn btn-primary" onclick="calculateTraverse()">計算する</button>
+      <button class="btn btn-secondary" onclick="clearTraverse()">クリア</button>
+    </div>
+
+    <div class="result-card" id="result-trav">
+      <div class="card-title"><span class="dot"></span>各点座標</div>
+      <div id="traverseResultList"></div>
+
+      <div id="traverseClosing" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+        <div class="result-label">閉合誤差（参考値）</div>
+        <div class="diff-row" style="margin-top:8px;">
+          <div class="diff-item"><div class="result-value" id="trav-close-dx">—</div></div>
+          <div class="diff-item"><div class="result-value" id="trav-close-dy">—</div></div>
+        </div>
+        <div class="result-sub" id="trav-close-ratio"></div>
+        <div class="note-box">⚠ 許容値との合否判定は行いません。判定が必要な場合は <a href="008-traverse-tolerance-checker.html">No.008 基準点測量許容値チェッカー</a> をご利用ください。</div>
       </div>
     </div>
   </div>
 
-  <div class="footer">No.002 座標計算ツール — Aiaこんぶ ツール部</div>
+  <div class="footer">No.002 座標計算ツール（逆計算・順計算・連続計算） — Aiaこんぶ ツール部</div>
 </div>
 
 <script>
-  let currentMode = 'dms';
-  let calcResult = null;
+  // ── 共通状態 ──
+  let currentMode = 'dms';          // モード1：方位角の出力表示形式
+  let azimuthInputFormat = 'dms';   // モード2・3：方位角の入力形式
   let decimalPlaces = 4;
   let optionOpen = false;
+  let currentTab = 'inverse';
 
+  let calcResult = null; // モード1
+  let fwdResult = null;  // モード2
+  let travResult = null; // モード3
+  let travRowCounter = 0;
+
+  // ── 数値フォーマット共通 ──
+  function fmt(n) {
+    let v = n;
+    if (Math.abs(v) < 1e-9) v = 0; // -0.0000 表示を防ぐ
+    return v.toFixed(decimalPlaces);
+  }
+
+  function parseNum(id) {
+    const v = document.getElementById(id).value.trim();
+    if (v === '') return NaN;
+    return parseFloat(v);
+  }
+
+  // 方位角入力文字列を10進度に変換（度分秒／10進度の両形式に対応）
+  function parseAzimuthInput(str) {
+    str = (str || '').trim();
+    if (str === '') return NaN;
+    if (azimuthInputFormat === 'deg') {
+      return parseFloat(str);
+    }
+    const nums = str.match(/\d+(?:\.\d+)?/g);
+    if (!nums) return NaN;
+    const d = parseFloat(nums[0] !== undefined ? nums[0] : '0');
+    const m = nums[1] !== undefined ? parseFloat(nums[1]) : 0;
+    const s = nums[2] !== undefined ? parseFloat(nums[2]) : 0;
+    return d + m / 60 + s / 3600;
+  }
+
+  // ── オプションパネル ──
   function toggleOption() {
     optionOpen = !optionOpen;
     const panel = document.getElementById('optionPanel');
@@ -425,18 +709,45 @@
 
   function setDecimal(n) {
     decimalPlaces = n;
-    [2,3,4,5,6].forEach(d => {
+    [2, 3, 4, 5, 6].forEach(d => {
       document.getElementById(`dec-${d}`).classList.toggle('active', d === n);
     });
     showResult();
+    if (fwdResult) renderForwardResult();
+    if (travResult) renderTraverseResult();
   }
 
-  function parseNum(id) {
-    const v = document.getElementById(id).value.trim();
-    if (v === '') return NaN;
-    return parseFloat(v);
+  function setAzimuthFormat(fmtId) {
+    azimuthInputFormat = fmtId;
+    document.getElementById('azfmt-dms').classList.toggle('active', fmtId === 'dms');
+    document.getElementById('azfmt-deg').classList.toggle('active', fmtId === 'deg');
+    updateAzimuthPlaceholders();
   }
 
+  function updateAzimuthPlaceholders() {
+    const isDms = azimuthInputFormat === 'dms';
+    const example = isDms ? '135-30-15' : '135.5000';
+    const labelText = isDms ? '方位角（度分秒）' : '方位角（10進度）';
+
+    const fazInput = document.getElementById('faz');
+    if (fazInput) fazInput.placeholder = example;
+    const fazLabel = document.getElementById('faz-label');
+    if (fazLabel) fazLabel.textContent = labelText;
+
+    document.querySelectorAll('.trav-az-input').forEach(el => { el.placeholder = example; });
+    document.querySelectorAll('.trav-az-label').forEach(el => { el.textContent = labelText; });
+  }
+
+  // ── タブ切替 ──
+  function setTab(tab) {
+    currentTab = tab;
+    ['inverse', 'forward', 'traverse'].forEach(t => {
+      document.getElementById('mode-' + t).classList.toggle('active', t === tab);
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    });
+  }
+
+  // ═══════════ モード1：逆計算 ═══════════
   function calculate() {
     const x1 = parseNum('x1');
     const y1 = parseNum('y1');
@@ -474,18 +785,15 @@
     const resultEl = document.getElementById('result');
     resultEl.classList.add('show');
 
-    // 距離
     document.getElementById('distance').innerHTML =
-      dist.toFixed(decimalPlaces) + '<span class="unit">m</span>';
+      fmt(dist) + '<span class="unit">m</span>';
 
-    // 方位角
     updateAzimuth();
 
-    // ΔX, ΔY
     document.getElementById('dx').innerHTML =
-      'ΔX ' + (dx >= 0 ? '+' : '') + dx.toFixed(decimalPlaces) + '<span class="unit">m</span>';
+      'ΔX ' + (dx >= 0 ? '+' : '') + fmt(dx) + '<span class="unit">m</span>';
     document.getElementById('dy').innerHTML =
-      'ΔY ' + (dy >= 0 ? '+' : '') + dy.toFixed(decimalPlaces) + '<span class="unit">m</span>';
+      'ΔY ' + (dy >= 0 ? '+' : '') + fmt(dy) + '<span class="unit">m</span>';
   }
 
   function updateAzimuth() {
@@ -527,12 +835,241 @@
     document.getElementById('x1').focus();
   }
 
-  // Enterキーで計算
-  document.querySelectorAll('input').forEach(input => {
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') calculate();
+  // ═══════════ モード2：順計算（放射計算） ═══════════
+  function calculateForward() {
+    const errEl = document.getElementById('error-fwd');
+    errEl.classList.remove('show');
+    document.getElementById('result-fwd').classList.remove('show');
+    fwdResult = null;
+
+    const x0 = parseNum('fx0');
+    const y0 = parseNum('fy0');
+    const distStr = document.getElementById('fdist').value.trim();
+    const azStr = document.getElementById('faz').value.trim();
+
+    if (isNaN(x0) || isNaN(y0) || distStr === '' || azStr === '') {
+      errEl.textContent = '※ すべての項目を入力してください';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const d = parseFloat(distStr);
+    const az = parseAzimuthInput(azStr);
+
+    if (isNaN(d) || isNaN(az)) {
+      errEl.textContent = '※ 距離・方位角を正しい数値で入力してください';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const rad = az * Math.PI / 180;
+    const x1 = x0 + d * Math.cos(rad);
+    const y1 = y0 + d * Math.sin(rad);
+
+    fwdResult = { x0, y0, x1, y1 };
+    renderForwardResult();
+  }
+
+  function renderForwardResult() {
+    if (!fwdResult) return;
+    const { x0, y0, x1, y1 } = fwdResult;
+
+    document.getElementById('fwd-x').innerHTML = fmt(x1) + '<span class="unit">m</span>';
+    document.getElementById('fwd-y').innerHTML = fmt(y1) + '<span class="unit">m</span>';
+    document.getElementById('fwd-sub').textContent =
+      'ΔX ' + (x1 - x0 >= 0 ? '+' : '') + fmt(x1 - x0) + ' ／ ΔY ' + (y1 - y0 >= 0 ? '+' : '') + fmt(y1 - y0);
+
+    document.getElementById('result-fwd').classList.add('show');
+  }
+
+  function clearForward() {
+    ['fx0', 'fy0', 'fdist', 'faz'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('result-fwd').classList.remove('show');
+    document.getElementById('error-fwd').classList.remove('show');
+    fwdResult = null;
+  }
+
+  // ═══════════ モード3：連続計算（トラバース） ═══════════
+  function addTraverseRow() {
+    travRowCounter++;
+    const container = document.getElementById('traverseRows');
+    const row = document.createElement('div');
+    row.className = 'traverse-row';
+
+    const isDms = azimuthInputFormat === 'dms';
+    const azLabel = isDms ? '方位角（度分秒）' : '方位角（10進度）';
+    const azPlaceholder = isDms ? '135-30-15' : '135.5000';
+
+    row.innerHTML =
+      '<div class="trav-row-head">' +
+        '<span class="trav-row-num"></span>' +
+        '<button class="trav-row-del" type="button" onclick="removeTraverseRow(this)">✕</button>' +
+      '</div>' +
+      '<div class="input-row">' +
+        '<div class="input-group">' +
+          '<label>距離 D（m）</label>' +
+          '<input type="text" class="trav-dist-input" inputmode="decimal" placeholder="45.678">' +
+        '</div>' +
+        '<div class="input-group">' +
+          '<label class="trav-az-label">' + azLabel + '</label>' +
+          '<input type="text" class="trav-az-input" placeholder="' + azPlaceholder + '">' +
+        '</div>' +
+      '</div>';
+
+    container.appendChild(row);
+    renumberTraverseRows();
+  }
+
+  function removeTraverseRow(btn) {
+    const container = document.getElementById('traverseRows');
+    if (container.children.length <= 1) return;
+    btn.closest('.traverse-row').remove();
+    renumberTraverseRows();
+  }
+
+  function renumberTraverseRows() {
+    const rows = document.querySelectorAll('#traverseRows .traverse-row');
+    rows.forEach((row, i) => {
+      row.querySelector('.trav-row-num').textContent =
+        '観測 ' + (i + 1) + '（点' + i + ' → 点' + (i + 1) + '）';
+      row.querySelector('.trav-row-del').disabled = rows.length <= 1;
     });
+  }
+
+  function calculateTraverse() {
+    const errEl = document.getElementById('error-trav');
+    errEl.classList.remove('show');
+    document.getElementById('result-trav').classList.remove('show');
+    travResult = null;
+
+    const x0 = parseNum('trav-x0');
+    const y0 = parseNum('trav-y0');
+
+    if (isNaN(x0) || isNaN(y0)) {
+      errEl.textContent = '※ 起点座標を数値で入力してください';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const rows = document.querySelectorAll('#traverseRows .traverse-row');
+    if (rows.length === 0) {
+      errEl.textContent = '※ 観測行を1行以上追加してください';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const legs = [];
+    for (let i = 0; i < rows.length; i++) {
+      const distStr = rows[i].querySelector('.trav-dist-input').value.trim();
+      const azStr = rows[i].querySelector('.trav-az-input').value.trim();
+
+      if (distStr === '' || azStr === '') {
+        errEl.textContent = '※ 観測 ' + (i + 1) + ' の距離・方位角を入力してください';
+        errEl.classList.add('show');
+        return;
+      }
+
+      const d = parseFloat(distStr);
+      const az = parseAzimuthInput(azStr);
+
+      if (isNaN(d) || isNaN(az)) {
+        errEl.textContent = '※ 観測 ' + (i + 1) + ' の入力値を確認してください（数値で入力）';
+        errEl.classList.add('show');
+        return;
+      }
+
+      legs.push({ d, az });
+    }
+
+    let cx = x0, cy = y0;
+    const points = [{ x: cx, y: cy }];
+    for (const leg of legs) {
+      const rad = leg.az * Math.PI / 180;
+      cx = cx + leg.d * Math.cos(rad);
+      cy = cy + leg.d * Math.sin(rad);
+      points.push({ x: cx, y: cy });
+    }
+
+    let xn = NaN, yn = NaN;
+    const xnStr = document.getElementById('trav-xn').value.trim();
+    const ynStr = document.getElementById('trav-yn').value.trim();
+    if (xnStr !== '' && ynStr !== '') {
+      xn = parseFloat(xnStr);
+      yn = parseFloat(ynStr);
+    }
+
+    travResult = { points, legs, xn, yn };
+    renderTraverseResult();
+  }
+
+  function renderTraverseResult() {
+    if (!travResult) return;
+    const { points, legs, xn, yn } = travResult;
+
+    const listEl = document.getElementById('traverseResultList');
+    listEl.innerHTML = points.map((p, i) => (
+      '<div class="result-item">' +
+        '<div class="result-label">' + (i === 0 ? '起点（点0）' : '点' + i) + '</div>' +
+        '<div class="diff-row">' +
+          '<div class="diff-item"><div class="result-value">' + fmt(p.x) + '<span class="unit">m</span></div></div>' +
+          '<div class="diff-item"><div class="result-value">' + fmt(p.y) + '<span class="unit">m</span></div></div>' +
+        '</div>' +
+      '</div>'
+    )).join('');
+
+    const closingEl = document.getElementById('traverseClosing');
+
+    if (!isNaN(xn) && !isNaN(yn)) {
+      const last = points[points.length - 1];
+      const dX = xn - last.x;
+      const dY = yn - last.y;
+      const closeDist = Math.sqrt(dX * dX + dY * dY);
+      const totalLength = legs.reduce((s, l) => s + l.d, 0);
+
+      document.getElementById('trav-close-dx').innerHTML =
+        'ΔX ' + (dX >= 0 ? '+' : '') + fmt(dX) + '<span class="unit">m</span>';
+      document.getElementById('trav-close-dy').innerHTML =
+        'ΔY ' + (dY >= 0 ? '+' : '') + fmt(dY) + '<span class="unit">m</span>';
+
+      let ratioText = '閉合距離 ' + fmt(closeDist) + 'm ／ 総延長 ' + fmt(totalLength) + 'm';
+      if (closeDist > 1e-9 && totalLength > 0) {
+        ratioText += ' ／ 閉合比 1/' + Math.round(totalLength / closeDist);
+      } else if (totalLength > 0) {
+        ratioText += ' ／ 閉合比 —（誤差なし）';
+      }
+      document.getElementById('trav-close-ratio').textContent = ratioText;
+      closingEl.style.display = 'block';
+    } else {
+      closingEl.style.display = 'none';
+    }
+
+    document.getElementById('result-trav').classList.add('show');
+  }
+
+  function clearTraverse() {
+    document.getElementById('trav-x0').value = '';
+    document.getElementById('trav-y0').value = '';
+    document.getElementById('trav-xn').value = '';
+    document.getElementById('trav-yn').value = '';
+    document.getElementById('traverseRows').innerHTML = '';
+    travRowCounter = 0;
+    for (let i = 0; i < 3; i++) addTraverseRow();
+    document.getElementById('result-trav').classList.remove('show');
+    document.getElementById('error-trav').classList.remove('show');
+    travResult = null;
+  }
+
+  // ── Enterキーで計算（現在のタブに応じて分岐・動的追加行にも対応） ──
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (!e.target || e.target.tagName !== 'INPUT') return;
+    if (currentTab === 'inverse') calculate();
+    else if (currentTab === 'forward') calculateForward();
+    else if (currentTab === 'traverse') calculateTraverse();
   });
+
+  // ── 初期化：連続計算モードの初期行を3行生成 ──
+  for (let i = 0; i < 3; i++) addTraverseRow();
 </script>
 </body>
 </html>
