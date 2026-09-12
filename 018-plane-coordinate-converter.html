@@ -1,0 +1,714 @@
+<!-- 業務ID：R8-3-Tl018 -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.018 平面直角座標系⇔緯度経度 変換ツール</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #4a9eff;
+    --accent2: #7c5cfc;
+    --ok: #2ecc71;
+    --warn: #f39c12;
+    --err: #e74c3c;
+    --text: #e8eaf0;
+    --text2: #8892b0;
+    --text3: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  .container { max-width: 520px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 20px; }
+
+  .badge-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-bottom: 8px;
+  }
+
+  .badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text3);
+    background: var(--surface2);
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .title {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 4px;
+  }
+
+  .desc { font-size: 12px; color: var(--text2); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .card-title::before {
+    content: ''; display: inline-block;
+    width: 3px; height: 12px;
+    background: var(--accent); border-radius: 2px;
+  }
+
+  select.zone-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13.5px;
+    padding: 10px 12px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  select.zone-select:focus { border-color: var(--accent); }
+
+  .zone-origin {
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text3);
+  }
+
+  .tabs {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px; margin-bottom: 14px;
+  }
+
+  .tab {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; font-weight: 700;
+    background: var(--surface); color: var(--text2);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 4px; cursor: pointer; text-align: center;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+
+  .tab.active {
+    background: rgba(74,158,255,0.12);
+    color: var(--accent); border-color: var(--accent);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .formula-note {
+    background: rgba(74,158,255,0.05);
+    border: 1px solid rgba(74,158,255,0.15);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 11px; color: var(--text2);
+    line-height: 1.8; margin-bottom: 12px;
+  }
+
+  .formula-note strong { color: var(--accent); }
+  .formula-note .note-jp {
+    color: var(--text3); font-size: 10.5px;
+    margin-top: 4px; display: block;
+  }
+
+  .field-label {
+    font-size: 11px; color: var(--text2); font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .field-sub {
+    font-size: 10px; color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .field-box { margin-bottom: 12px; }
+
+  .field-box input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14.5px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field-box input:focus { border-color: var(--accent); }
+  .field-box input.err { border-color: var(--err); }
+
+  .field-err {
+    font-size: 10.5px; color: var(--err);
+    margin-top: 4px; display: none;
+  }
+  .field-err.show { display: block; }
+
+  .btn-calc {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none;
+    border-radius: 8px; padding: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s;
+    margin-top: 4px;
+  }
+
+  .btn-calc:active { opacity: 0.85; }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin-bottom: 10px;
+  }
+
+  .result-table th {
+    text-align: left;
+    color: var(--text2); font-weight: 500;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .result-table td {
+    padding: 9px 8px;
+    border-bottom: 1px solid rgba(46,51,82,0.4);
+  }
+
+  .result-table tr:last-child td { border-bottom: none; }
+
+  .td-label { color: var(--text2); width: 34%; }
+
+  .td-out {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ok); font-weight: 600; font-size: 13.5px;
+  }
+
+  .output-area {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text);
+    line-height: 1.9; white-space: pre-wrap;
+    word-break: break-all; min-height: 40px;
+    margin-bottom: 10px;
+  }
+
+  .btn-copy {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none;
+    border-radius: 8px; padding: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; margin-bottom: 8px;
+  }
+
+  .btn-reset {
+    width: 100%;
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; cursor: pointer;
+  }
+
+  .copy-toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ok); color: #fff;
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 700;
+    opacity: 0; transition: all 0.3s;
+    pointer-events: none; z-index: 100;
+  }
+
+  .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none; }
+
+  .warn-box {
+    background: rgba(243,156,18,0.08);
+    border: 1px solid rgba(243,156,18,0.3);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 11px; color: var(--warn);
+    margin-bottom: 10px;
+  }
+
+  .footer { text-align: center; padding: 16px 0 4px; font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+  <div class="badge-row">
+    <span class="badge">No.018</span>
+    <span class="version">v1.0</span>
+  </div>
+  <div class="title">平面直角座標系⇔緯度経度 変換ツール</div>
+  <div class="desc">GNSS実測値（緯度経度）と公共測量成果（平面直角座標）を相互変換</div>
+</div>
+
+<!-- 系番号選択（共通） -->
+<div class="card">
+  <div class="card-title">系番号の選択</div>
+  <select class="zone-select" id="zoneSelect" onchange="updateZoneOrigin()"></select>
+  <div class="zone-origin" id="zoneOrigin"></div>
+</div>
+
+<!-- タブ -->
+<div class="tabs">
+  <button class="tab active" id="tabBtn-b2x" onclick="switchTab('b2x')">緯度経度 → 平面直角座標</button>
+  <button class="tab" id="tabBtn-x2b" onclick="switchTab('x2b')">平面直角座標 → 緯度経度</button>
+</div>
+
+<!-- 緯度経度 → XY パネル -->
+<div class="panel active" id="panel-b2x">
+  <div class="formula-note">
+    <strong>準拠楕円体：GRS80（世界測地系・JGD2011）</strong>　縮尺係数 m0 = 0.9999
+    <span class="note-jp">国土地理院公表のガウス・クリューゲル図法による換算式で計算します。緯度・経度は「35.658581」のような10進法度、または「35 39 29.1」「35°39′29.1″」のような度分秒表記のどちらでも入力できます。</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">緯度・経度の入力</div>
+
+    <div class="field-box">
+      <div class="field-label">緯度（北緯）</div>
+      <div class="field-sub">例：35.658581　または　35 39 29.1</div>
+      <input type="text" id="latInput" placeholder="35.658581">
+      <div class="field-err" id="latErr">緯度は-90〜90の範囲、または正しい度分秒形式で入力してください</div>
+    </div>
+
+    <div class="field-box">
+      <div class="field-label">経度（東経）</div>
+      <div class="field-sub">例：139.745433　または　139 44 43.6</div>
+      <input type="text" id="lonInput" placeholder="139.745433">
+      <div class="field-err" id="lonErr">経度は-180〜180の範囲、または正しい度分秒形式で入力してください</div>
+    </div>
+
+    <button class="btn-calc" onclick="calcB2X()">✦ 平面直角座標に変換</button>
+  </div>
+
+  <div class="card hidden" id="b2xWarnCard">
+    <div class="warn-box" id="b2xWarnBox"></div>
+  </div>
+
+  <div class="card hidden" id="b2xResultCard">
+    <div class="card-title">変換結果</div>
+    <table class="result-table">
+      <tbody>
+        <tr><td class="td-label">X（南北）</td><td class="td-out" id="b2xOutX"></td></tr>
+        <tr><td class="td-label">Y（東西）</td><td class="td-out" id="b2xOutY"></td></tr>
+      </tbody>
+    </table>
+    <div class="output-area" id="b2xOutputArea"></div>
+    <button class="btn-copy" onclick="copyText('b2xOutputArea')">📋 コピー</button>
+    <button class="btn-reset" onclick="resetPanel('b2x')">↺ リセット</button>
+  </div>
+</div>
+
+<!-- XY → 緯度経度 パネル -->
+<div class="panel" id="panel-x2b">
+  <div class="formula-note">
+    <strong>準拠楕円体：GRS80（世界測地系・JGD2011）</strong>　縮尺係数 m0 = 0.9999
+    <span class="note-jp">系原点を（X, Y）=（0, 0）とした座標値を入力してください。単位はメートルです。</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">平面直角座標の入力</div>
+
+    <div class="field-box">
+      <div class="field-label">X（南北・メートル）</div>
+      <input type="text" id="xInput" placeholder="-37875.085">
+      <div class="field-err" id="xErr">Xは数値で入力してください</div>
+    </div>
+
+    <div class="field-box">
+      <div class="field-label">Y（東西・メートル）</div>
+      <input type="text" id="yInput" placeholder="-7958.644">
+      <div class="field-err" id="yErr">Yは数値で入力してください</div>
+    </div>
+
+    <button class="btn-calc" onclick="calcX2B()">✦ 緯度経度に変換</button>
+  </div>
+
+  <div class="card hidden" id="x2bResultCard">
+    <div class="card-title">変換結果</div>
+    <table class="result-table">
+      <tbody>
+        <tr><td class="td-label">緯度（10進法度）</td><td class="td-out" id="x2bOutLatDec"></td></tr>
+        <tr><td class="td-label">緯度（度分秒）</td><td class="td-out" id="x2bOutLatDms"></td></tr>
+        <tr><td class="td-label">経度（10進法度）</td><td class="td-out" id="x2bOutLonDec"></td></tr>
+        <tr><td class="td-label">経度（度分秒）</td><td class="td-out" id="x2bOutLonDms"></td></tr>
+      </tbody>
+    </table>
+    <div class="output-area" id="x2bOutputArea"></div>
+    <button class="btn-copy" onclick="copyText('x2bOutputArea')">📋 コピー</button>
+    <button class="btn-reset" onclick="resetPanel('x2b')">↺ リセット</button>
+  </div>
+</div>
+
+<div class="copy-toast" id="copyToast">コピーしました！</div>
+
+<div class="footer">No.018 平面直角座標系⇔緯度経度 変換ツール — arisa-tools</div>
+
+</div>
+
+<script>
+/* =========================================================
+   ガウス・クリューゲル図法による平面直角座標系⇔緯度経度 変換
+   準拠：国土地理院「平面直角座標系と緯度経度の換算」計算式
+   （河瀬和重(2011)の展開式に基づく。GRS80楕円体・JGD2011）
+   ========================================================= */
+
+const GRS80_A = 6378137.0;       // 長半径
+const GRS80_F = 298.257222101;   // 逆扁平率
+const M0 = 0.9999;               // 縮尺係数
+const D2R = Math.PI / 180;
+const R2D = 180 / Math.PI;
+
+const f = 1 / GRS80_F;
+const n = f / (2 - f);
+const n2 = n*n, n3 = n2*n, n4 = n3*n, n5 = n4*n, n6 = n5*n;
+
+// 子午線弧長の展開係数 A0〜A5
+const A0 = 1 + n2/4 + n4/64;
+const A1 = -(3/2)*(n - n3/8 - n5/64);
+const A2 = (15/16)*(n2 - n4/4);
+const A3 = -(35/48)*(n3 - (5/16)*n5);
+const A4 = (315/512)*n4;
+const A5 = -(693/1280)*n5;
+
+// 順変換（緯度経度→XY）で使う係数 α1〜α5
+const ALPHA = [0,
+  0.5*n - (2/3)*n2 + (5/16)*n3 + (41/180)*n4 - (127/288)*n5,
+  (13/48)*n2 - (3/5)*n3 + (557/1440)*n4 + (281/630)*n5,
+  (61/240)*n3 - (103/140)*n4 + (15061/26880)*n5,
+  (49561/161280)*n4 - (179/168)*n5,
+  (34729/80640)*n5
+];
+
+// 逆変換（XY→緯度経度）で使う係数 β1〜β5
+const BETA = [0,
+  0.5*n - (2/3)*n2 + (37/96)*n3 - (1/360)*n4 - (81/512)*n5,
+  (1/48)*n2 + (1/15)*n3 - (437/1440)*n4 + (46/105)*n5,
+  (17/480)*n3 - (37/840)*n4 - (209/4480)*n5,
+  (4397/161280)*n4 - (11/504)*n5,
+  (4583/161280)*n5
+];
+
+// 逆変換で使う係数 δ1〜δ5
+const DELTA = [0,
+  2*n - (2/3)*n2 - 2*n3 + (116/45)*n4 + (26/45)*n5 - (2854/675)*n6,
+  (7/3)*n2 - (8/5)*n3 - (227/45)*n4 + (2704/315)*n5 + (2323/945)*n6,
+  (56/15)*n3 - (136/35)*n4 - (1262/105)*n5 + (73814/2835)*n6,
+  (4279/630)*n4 - (332/35)*n5 - (399572/14175)*n6,
+  (4174/315)*n5 - (144838/6237)*n6
+];
+
+const A_BAR = (GRS80_A/(1+n)) * A0;
+
+function atanh(x){ return 0.5 * Math.log((1+x)/(1-x)); }
+
+function meridianArc(phi){
+  return (GRS80_A/(1+n)) * (
+    A0*phi + A1*Math.sin(2*phi) + A2*Math.sin(4*phi) +
+    A3*Math.sin(6*phi) + A4*Math.sin(8*phi) + A5*Math.sin(10*phi)
+  );
+}
+
+// 緯度経度（度）→ 平面直角座標 X,Y（メートル）
+function latLonToXY(latDeg, lonDeg, origLatDeg, origLonDeg){
+  const phi = latDeg * D2R, lambda = lonDeg * D2R;
+  const phi0 = origLatDeg * D2R, lambda0 = origLonDeg * D2R;
+
+  const coef0 = 2 * Math.sqrt(n) / (1+n);
+  const t = Math.sinh(atanh(Math.sin(phi)) - coef0 * atanh(coef0 * Math.sin(phi)));
+  const tBar = Math.sqrt(1 + t*t);
+  const lc = Math.cos(lambda - lambda0), ls = Math.sin(lambda - lambda0);
+
+  const xiP = Math.atan2(t, lc);
+  const etaP = atanh(ls / tBar);
+
+  let xi = xiP, eta = etaP;
+  for (let j = 1; j <= 5; j++){
+    xi  += ALPHA[j] * Math.sin(2*j*xiP) * Math.cosh(2*j*etaP);
+    eta += ALPHA[j] * Math.cos(2*j*xiP) * Math.sinh(2*j*etaP);
+  }
+
+  const sBar0 = meridianArc(phi0);
+  const X = M0 * (A_BAR * xi - sBar0);
+  const Y = M0 * A_BAR * eta;
+  return { X, Y };
+}
+
+// 平面直角座標 X,Y（メートル）→ 緯度経度（度）
+function xyToLatLon(X, Y, origLatDeg, origLonDeg){
+  const phi0 = origLatDeg * D2R, lambda0 = origLonDeg * D2R;
+  const sBar0 = meridianArc(phi0);
+
+  const xi = (X / M0 + sBar0) / A_BAR;
+  const eta = (Y / M0) / A_BAR;
+
+  let xiPP = xi, etaPP = eta;
+  for (let j = 1; j <= 5; j++){
+    xiPP  -= BETA[j] * Math.sin(2*j*xi) * Math.cosh(2*j*eta);
+    etaPP -= BETA[j] * Math.cos(2*j*xi) * Math.sinh(2*j*eta);
+  }
+
+  const chi = Math.asin(Math.sin(xiPP) / Math.cosh(etaPP));
+  let phi = chi;
+  for (let j = 1; j <= 5; j++){
+    phi += DELTA[j] * Math.sin(2*j*chi);
+  }
+  const lambda = lambda0 + Math.atan2(Math.sinh(etaPP), Math.cos(xiPP));
+
+  return { lat: phi * R2D, lon: lambda * R2D };
+}
+
+/* ========== 系番号（1〜19系）の原点データ ========== */
+// 出典：国土交通省告示（平成14年国土交通省告示第9号）「平面直角座標系」
+const ZONES = [
+  { no: 1,  lat: 33, lon: 129 + 30/60, area: '長崎県／鹿児島県（南西諸島の一部）' },
+  { no: 2,  lat: 33, lon: 131,          area: '福岡県／佐賀県／熊本県／大分県／宮崎県／鹿児島県（1系除く）' },
+  { no: 3,  lat: 36, lon: 132 + 10/60, area: '山口県／島根県／広島県' },
+  { no: 4,  lat: 33, lon: 133 + 30/60, area: '香川県／愛媛県／徳島県／高知県' },
+  { no: 5,  lat: 36, lon: 134 + 20/60, area: '兵庫県／鳥取県／岡山県' },
+  { no: 6,  lat: 36, lon: 136,          area: '京都府／大阪府／福井県／滋賀県／三重県／奈良県／和歌山県' },
+  { no: 7,  lat: 36, lon: 137 + 10/60, area: '石川県／富山県／岐阜県／愛知県' },
+  { no: 8,  lat: 36, lon: 138 + 30/60, area: '新潟県／長野県／山梨県／静岡県' },
+  { no: 9,  lat: 36, lon: 139 + 50/60, area: '東京都（本土）／福島県／栃木県／茨城県／埼玉県／千葉県／群馬県／神奈川県' },
+  { no: 10, lat: 40, lon: 140 + 50/60, area: '青森県／秋田県／山形県／岩手県／宮城県' },
+  { no: 11, lat: 44, lon: 140 + 15/60, area: '北海道（道南）' },
+  { no: 12, lat: 44, lon: 142 + 15/60, area: '北海道（道央）' },
+  { no: 13, lat: 44, lon: 144 + 15/60, area: '北海道（道東）' },
+  { no: 14, lat: 26, lon: 142,          area: '東京都（小笠原諸島）' },
+  { no: 15, lat: 26, lon: 127 + 30/60, area: '沖縄県（本島周辺）' },
+  { no: 16, lat: 26, lon: 124,          area: '沖縄県（宮古・八重山諸島）' },
+  { no: 17, lat: 26, lon: 131,          area: '沖縄県（大東諸島）' },
+  { no: 18, lat: 20, lon: 136,          area: '東京都（沖ノ鳥島）' },
+  { no: 19, lat: 26, lon: 154,          area: '東京都（南鳥島）' },
+];
+
+/* ========== 度分秒⇔10進法度 ========== */
+function parseAngle(str){
+  if (str === null || str === undefined) return NaN;
+  let s = String(str).trim();
+  if (s === '') return NaN;
+  s = s.replace(/[°º]/g, ' ').replace(/[′']/g, ' ').replace(/[″"]/g, ' ');
+  s = s.replace(/[,:]/g, ' ').replace(/\s+/g, ' ').trim();
+  const parts = s.split(' ').filter(p => p !== '');
+  if (parts.length === 0) return NaN;
+  if (parts.length === 1) {
+    const v = parseFloat(parts[0]);
+    return v;
+  }
+  const d = parseFloat(parts[0]);
+  if (isNaN(d)) return NaN;
+  const m = parts.length >= 2 ? (parseFloat(parts[1]) || 0) : 0;
+  const sec = parts.length >= 3 ? (parseFloat(parts[2]) || 0) : 0;
+  const sign = d < 0 ? -1 : 1;
+  return sign * (Math.abs(d) + m/60 + sec/3600);
+}
+
+function decimalToDmsStr(value){
+  const sign = value < 0 ? -1 : 1;
+  const abs = Math.abs(value);
+  let deg = Math.floor(abs);
+  const minFloat = (abs - deg) * 60;
+  let min = Math.floor(minFloat);
+  let sec = (minFloat - min) * 60;
+  sec = Math.round(sec * 1000) / 1000;
+  if (sec >= 60) { sec -= 60; min += 1; }
+  if (min >= 60) { min -= 60; deg += 1; }
+  const degOut = sign * deg;
+  return `${degOut}°${String(min).padStart(2,'0')}′${sec.toFixed(2).padStart(5,'0')}″`;
+}
+
+/* ========== UI制御 ========== */
+function initZoneSelect(){
+  const sel = document.getElementById('zoneSelect');
+  sel.innerHTML = ZONES.map(z => `<option value="${z.no}">${z.no}系　${z.area}</option>`).join('');
+  sel.value = 9; // デフォルトは東京周辺で使う9系
+  updateZoneOrigin();
+}
+
+function getCurrentZone(){
+  const no = parseInt(document.getElementById('zoneSelect').value, 10);
+  return ZONES.find(z => z.no === no);
+}
+
+function updateZoneOrigin(){
+  const z = getCurrentZone();
+  document.getElementById('zoneOrigin').textContent =
+    `原点：北緯 ${decimalToDmsStr(z.lat)}　東経 ${decimalToDmsStr(z.lon)}`;
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('tabBtn-' + tab).classList.add('active');
+}
+
+function setFieldError(inputId, errId, show){
+  document.getElementById(inputId).classList.toggle('err', show);
+  document.getElementById(errId).classList.toggle('show', show);
+}
+
+/* ---- 緯度経度 → XY ---- */
+function calcB2X(){
+  const latRaw = document.getElementById('latInput').value;
+  const lonRaw = document.getElementById('lonInput').value;
+  const lat = parseAngle(latRaw);
+  const lon = parseAngle(lonRaw);
+
+  let hasErr = false;
+  if (isNaN(lat) || lat < -90 || lat > 90) { setFieldError('latInput','latErr',true); hasErr = true; }
+  else setFieldError('latInput','latErr',false);
+  if (isNaN(lon) || lon < -180 || lon > 180) { setFieldError('lonInput','lonErr',true); hasErr = true; }
+  else setFieldError('lonInput','lonErr',false);
+
+  if (hasErr) return;
+
+  const z = getCurrentZone();
+  const { X, Y } = latLonToXY(lat, lon, z.lat, z.lon);
+
+  document.getElementById('b2xOutX').textContent = X.toFixed(3) + ' m';
+  document.getElementById('b2xOutY').textContent = Y.toFixed(3) + ' m';
+
+  const warnCard = document.getElementById('b2xWarnCard');
+  const warnBox = document.getElementById('b2xWarnBox');
+  if (lat < 20 || lat > 46 || lon < 122 || lon > 155) {
+    warnBox.textContent = '⚠ 入力値が日本の一般的な範囲（緯度20〜46°、経度122〜155°）から外れています。系番号・入力値をご確認ください。';
+    warnCard.classList.remove('hidden');
+  } else {
+    warnCard.classList.add('hidden');
+  }
+
+  const lines = [
+    `系番号：${z.no}系（${z.area}）`,
+    `入力：北緯 ${lat}°　東経 ${lon}°`,
+    `X = ${X.toFixed(3)} m`,
+    `Y = ${Y.toFixed(3)} m`
+  ];
+  document.getElementById('b2xOutputArea').textContent = lines.join('\n');
+
+  document.getElementById('b2xResultCard').classList.remove('hidden');
+  document.getElementById('b2xResultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---- XY → 緯度経度 ---- */
+function calcX2B(){
+  const xRaw = document.getElementById('xInput').value;
+  const yRaw = document.getElementById('yInput').value;
+  const X = parseFloat(xRaw);
+  const Y = parseFloat(yRaw);
+
+  let hasErr = false;
+  if (xRaw.trim() === '' || isNaN(X)) { setFieldError('xInput','xErr',true); hasErr = true; }
+  else setFieldError('xInput','xErr',false);
+  if (yRaw.trim() === '' || isNaN(Y)) { setFieldError('yInput','yErr',true); hasErr = true; }
+  else setFieldError('yInput','yErr',false);
+
+  if (hasErr) return;
+
+  const z = getCurrentZone();
+  const { lat, lon } = xyToLatLon(X, Y, z.lat, z.lon);
+
+  document.getElementById('x2bOutLatDec').textContent = lat.toFixed(6) + '°';
+  document.getElementById('x2bOutLatDms').textContent = decimalToDmsStr(lat);
+  document.getElementById('x2bOutLonDec').textContent = lon.toFixed(6) + '°';
+  document.getElementById('x2bOutLonDms').textContent = decimalToDmsStr(lon);
+
+  const lines = [
+    `系番号：${z.no}系（${z.area}）`,
+    `入力：X = ${X} m　Y = ${Y} m`,
+    `緯度：${lat.toFixed(6)}°（${decimalToDmsStr(lat)}）`,
+    `経度：${lon.toFixed(6)}°（${decimalToDmsStr(lon)}）`
+  ];
+  document.getElementById('x2bOutputArea').textContent = lines.join('\n');
+
+  document.getElementById('x2bResultCard').classList.remove('hidden');
+  document.getElementById('x2bResultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---- コピー・リセット ---- */
+function copyText(areaId){
+  const text = document.getElementById(areaId).textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }).catch(() => {
+    alert('コピーに失敗しました。手動で選択してコピーしてください。');
+  });
+}
+
+function resetPanel(tab){
+  if (tab === 'b2x') {
+    document.getElementById('latInput').value = '';
+    document.getElementById('lonInput').value = '';
+    setFieldError('latInput','latErr',false);
+    setFieldError('lonInput','lonErr',false);
+    document.getElementById('b2xResultCard').classList.add('hidden');
+    document.getElementById('b2xWarnCard').classList.add('hidden');
+  } else {
+    document.getElementById('xInput').value = '';
+    document.getElementById('yInput').value = '';
+    setFieldError('xInput','xErr',false);
+    setFieldError('yInput','yErr',false);
+    document.getElementById('x2bResultCard').classList.add('hidden');
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---- 初期化 ---- */
+initZoneSelect();
+</script>
+</body>
+</html>
