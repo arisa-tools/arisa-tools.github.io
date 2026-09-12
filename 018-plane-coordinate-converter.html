@@ -375,6 +375,10 @@
     <button class="btn-calc" onclick="calcX2B()">✦ 緯度経度に変換</button>
   </div>
 
+  <div class="card hidden" id="x2bWarnCard">
+    <div class="warn-box" id="x2bWarnBox"></div>
+  </div>
+
   <div class="card hidden" id="x2bResultCard">
     <div class="card-title">変換結果</div>
     <table class="result-table">
@@ -550,6 +554,7 @@ function parseAngle(str){
   if (isNaN(d)) return NaN;
   const m = parts.length >= 2 ? (parseFloat(parts[1]) || 0) : 0;
   const sec = parts.length >= 3 ? (parseFloat(parts[2]) || 0) : 0;
+  if (m < 0 || m >= 60 || sec < 0 || sec >= 60) return NaN;
   const sign = d < 0 ? -1 : 1;
   return sign * (Math.abs(d) + m/60 + sec/3600);
 }
@@ -664,6 +669,15 @@ function calcX2B(){
   document.getElementById('x2bOutLonDec').textContent = lon.toFixed(6) + '°';
   document.getElementById('x2bOutLonDms').textContent = decimalToDmsStr(lon);
 
+  const x2bWarnCard = document.getElementById('x2bWarnCard');
+  const x2bWarnBox = document.getElementById('x2bWarnBox');
+  if (lat < 20 || lat > 46 || lon < 122 || lon > 155) {
+    x2bWarnBox.textContent = '⚠ 変換結果が日本の一般的な範囲（緯度20〜46°、経度122〜155°）から外れています。系番号・入力値をご確認ください。';
+    x2bWarnCard.classList.remove('hidden');
+  } else {
+    x2bWarnCard.classList.add('hidden');
+  }
+
   const lines = [
     `系番号：${z.no}系（${z.area}）`,
     `入力：X = ${X} m　Y = ${Y} m`,
@@ -703,6 +717,7 @@ function resetPanel(tab){
     setFieldError('xInput','xErr',false);
     setFieldError('yInput','yErr',false);
     document.getElementById('x2bResultCard').classList.add('hidden');
+    document.getElementById('x2bWarnCard').classList.add('hidden');
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
