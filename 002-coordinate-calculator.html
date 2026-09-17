@@ -458,12 +458,35 @@
 
   .error-msg.show { display: block; }
 
+  /* ── 一覧へ戻るリンク ── */
+  .top-nav {
+    margin-bottom: 4px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--accent); }
+
   /* ── フッター ── */
   .footer {
     text-align: center;
     padding: 16px 0;
     font-size: 11px;
     color: var(--label);
+  }
+
+  .footer-back {
+    text-align: left;
+    margin-bottom: 6px;
   }
 
   .footer a {
@@ -482,6 +505,9 @@
 <body>
 
 <div class="container">
+  <div class="top-nav">
+    <a class="back-link" href="demo-index.html">← 一覧へ</a>
+  </div>
   <!-- ヘッダー -->
   <div class="header">
     <div class="header-icon">📐</div>
@@ -751,7 +777,10 @@
     </div>
   </div>
 
-  <div class="footer">No.002 座標計算ツール（逆計算・順計算・連続計算） — Aiaこんぶ ツール部</div>
+  <div class="footer">
+    <div class="footer-back"><a href="demo-index.html">← 一覧へ</a></div>
+    No.002 座標計算ツール（逆計算・順計算・連続計算） — Aiaこんぶ ツール部
+  </div>
 </div>
 
 <script>

@@ -65,6 +65,30 @@
     margin-top: 6px;
   }
 
+  /* ── 一覧へ戻るリンク ── */
+  .top-nav {
+    margin-bottom: 16px;
+  }
+
+  .bottom-nav {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-dim);
+    font-size: 12px;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--accent); }
+
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -481,6 +505,10 @@
 </head>
 <body>
 
+<div class="top-nav">
+  <a class="back-link" href="demo-index.html">← 一覧へ</a>
+</div>
+
 <header>
   <div class="badge">No.007</div>
   <h1>観測手簿補完ツール</h1>
@@ -571,6 +599,10 @@
     </div>
     <div class="noise-log" id="noiseLog"></div>
   </div>
+</div>
+
+<div class="bottom-nav">
+  <a class="back-link" href="demo-index.html">← 一覧へ</a>
 </div>
 
 <script>

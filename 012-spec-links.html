@@ -88,6 +88,25 @@
     letter-spacing: 0.03em;
   }
   .btn-settings:hover { border-color: #aaa; color: #fff; }
+  .back-link {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #ccc;
+    text-decoration: none;
+    border: 1px solid #555;
+    padding: 2px 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+  .back-link:hover { border-color: #aaa; color: #fff; }
+  .footer-back {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .footer-back:hover { border-color: var(--accent); }
 
   /* ========== DEPT BAR ========== */
   .dept-bar {
@@ -469,6 +488,7 @@
     .link-item { flex-wrap: wrap; gap: 6px; }
     .link-year { min-width: 0; }
     .modal { padding: 24px 20px; }
+    .back-link .back-link-text { display: none; }
   }
 </style>
 </head>
@@ -477,6 +497,7 @@
 <!-- HEADER -->
 <header class="site-header">
   <div class="logo">
+    <a class="back-link" href="demo-index.html" title="一覧へ戻る"><span aria-hidden="true">←</span><span class="back-link-text"> 一覧</span></a>
     <span class="badge">No.012</span>
     <span class="title">参考図書リンク集</span>
   </div>
@@ -504,7 +525,8 @@
 </div>
 
 <footer class="site-footer">
-  arisa-tools — No.012 参考図書リンク集 v4.0 — データソース: Google Sheets
+  arisa-tools — No.012 参考図書リンク集 v4.0 — データソース: Google Sheets<br>
+  <a class="footer-back" href="demo-index.html">← 一覧へ戻る</a>
 </footer>
 
 <!-- DATA MANAGEMENT MODAL -->

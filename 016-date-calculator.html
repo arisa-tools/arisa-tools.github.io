@@ -352,6 +352,22 @@
             margin-top: 32px;
         }
 
+        .footer-nav {
+            text-align: left;
+            margin-top: 32px;
+        }
+
+        .footer-back-link {
+            font-size: 12px;
+            color: var(--label);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-back-link:hover { color: var(--accent); }
+
+        .footer-nav + .footer { margin-top: 8px; }
+
         /* ── 日付追加ボタン計算モード ── */
         #tab-add .form-row select {
             max-width: 120px;
@@ -410,7 +426,7 @@
     <!-- ヘッダー -->
     <div class="header">
         <div>
-            <a class="back-link" href="index.html">← ツール一覧</a>
+            <a class="back-link" href="demo-index.html">← 一覧へ</a>
         </div>
         <div class="header-badge">No.016</div>
         <h1>日数計算機</h1>
@@ -559,6 +575,9 @@
         </div>
     </div>
 
+    <div class="footer-nav">
+        <a class="footer-back-link" href="demo-index.html">← 一覧へ戻る</a>
+    </div>
     <div class="footer">arisa-tools No.016 &nbsp;|&nbsp; Powered by Aiaこんぶ ツール部</div>
 </div>
 

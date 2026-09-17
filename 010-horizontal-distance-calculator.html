@@ -356,9 +356,40 @@
 
   .help-content.show { display: block; }
   .help-content strong { color: var(--accent2); }
+
+  /* ── 一覧へ戻るリンク ── */
+  .back-link-row { text-align: left; margin-bottom: 10px; }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text2);
+    text-decoration: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface2);
+    transition: all 0.15s;
+  }
+
+  .back-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .footer {
+    text-align: left;
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
 </style>
 </head>
 <body>
+
+<div class="back-link-row">
+  <a class="back-link" href="demo-index.html">← 一覧へ</a>
+</div>
 
 <div class="header">
   <div class="badge-row">
@@ -417,6 +448,10 @@
   <div class="output-area" id="outputArea"></div>
   <button class="btn-copy" onclick="copyText()">📋 コピー</button>
   <button class="btn-reset" onclick="resetAll()">↺ リセット</button>
+</div>
+
+<div class="footer">
+  <a class="back-link" href="demo-index.html">← 一覧へ</a>
 </div>
 
 <div class="copy-toast" id="copyToast">コピーしました！</div>

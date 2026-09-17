@@ -44,6 +44,7 @@
   header {
     display: flex;
     align-items: flex-end;
+    flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 40px;
     border-bottom: 1px solid var(--border);
@@ -69,6 +70,35 @@
     margin-left: auto;
     font-family: 'Share Tech Mono', monospace;
   }
+
+  /* ── 一覧へ戻るリンク ── */
+  .back-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .back-badge:hover { color: var(--accent); border-color: var(--accent); }
+
+  .page-footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    text-align: left;
+  }
+  .page-footer .back-link {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .page-footer .back-link:hover { color: var(--accent); }
 
   /* メインレイアウト */
   .layout {
@@ -430,6 +460,7 @@
 <div class="app-shell">
 
   <header>
+    <a href="demo-index.html" class="back-badge">← 一覧</a>
     <div class="badge">No.006</div>
     <h1>座標面積計算ツール</h1>
     <div class="sub">Gauss's Area Formula　v1.1</div>
@@ -525,6 +556,10 @@
     </div>
 
   </div><!-- /layout -->
+
+  <footer class="page-footer">
+    <a href="demo-index.html" class="back-link">← ツール一覧へ戻る</a>
+  </footer>
 </div><!-- /app-shell -->
 
 <script>

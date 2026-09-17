@@ -153,7 +153,19 @@
   .dms-btn:active { transform:scale(0.95); }
 
   /* ── フッター ── */
-  .footer { text-align:center; padding:16px 0; font-size:11px; color:var(--label); }
+  .footer { display:flex; align-items:center; justify-content:space-between; padding:16px 2px; font-size:11px; color:var(--label); }
+
+  /* ── 一覧へ戻るリンク ── */
+  .page-nav { margin-bottom:6px; }
+  .back-link {
+    display:inline-flex; align-items:center; gap:4px;
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    color:var(--text-dim); text-decoration:none;
+    padding:4px 9px; border:1px solid var(--border); border-radius:6px;
+    transition:all 0.15s;
+  }
+  .back-link:hover { color:var(--accent); border-color:var(--accent); }
+  .footer .back-link { padding:3px 8px; font-size:10.5px; }
 
   /* ── フィールドヒント／ヘルプ ── */
   .field-hint {
@@ -207,6 +219,8 @@
 <body>
 
 <div class="container">
+
+  <div class="page-nav"><a href="demo-index.html" class="back-link">← ツール一覧へ</a></div>
 
   <div class="header">
     <div class="header-icon">📏</div>
@@ -383,7 +397,10 @@
     <button class="btn-clear" onclick="clearAll('area')">クリア</button>
   </div>
 
-  <div class="footer">No.005 単位変換ツール — arisa-tools</div>
+  <div class="footer">
+    <a href="demo-index.html" class="back-link">← ツール一覧へ</a>
+    <span>No.005 単位変換ツール — arisa-tools</span>
+  </div>
 </div>
 
 <script>

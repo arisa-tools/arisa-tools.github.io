@@ -84,6 +84,30 @@
     color: var(--text2);
   }
 
+  /* ── 一覧へ戻るリンク ── */
+  .top-nav {
+    margin-bottom: 16px;
+  }
+
+  .bottom-nav {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text2);
+    font-size: 12px;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--accent); }
+
   /* カード */
   .card {
     background: var(--surface);
@@ -434,6 +458,10 @@
 </head>
 <body>
 
+<div class="top-nav">
+  <a class="back-link" href="demo-index.html">← 一覧へ</a>
+</div>
+
 <div class="header">
   <div class="badge-row">
     <span class="badge">No.008</span>
@@ -550,6 +578,10 @@
   <div class="law-note" id="lawNote"></div>
 
   <button class="reset-btn" onclick="resetAll()">↺ リセットして再入力</button>
+</div>
+
+<div class="bottom-nav">
+  <a class="back-link" href="demo-index.html">← 一覧へ</a>
 </div>
 
 <script>
