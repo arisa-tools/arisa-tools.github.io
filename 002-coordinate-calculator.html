@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>座標計算ツール v2.0 | Aiaこんぶ</title>
+<title>座標計算ツール v2.1 | Aiaこんぶ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -400,6 +400,54 @@
 
   .note-box a:hover { text-decoration: underline; }
 
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    margin: -2px 0 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent2); }
+
   /* ── エラー ── */
   .error-msg {
     color: var(--danger);
@@ -438,7 +486,7 @@
   <div class="header">
     <div class="header-icon">📐</div>
     <h1>座標計算ツール</h1>
-    <span class="version">v2.0</span>
+    <span class="version">v2.1</span>
     <div class="tool-desc-header">2点座標の逆計算・放射計算（順計算）・連続観測点のトラバース計算（連続計算）に対応</div>
 
     <!-- オプション -->
@@ -457,6 +505,9 @@
           <span style="font-size:11px; color:var(--label);">方位角入力形式</span>
           <button class="toggle-btn active" id="azfmt-dms" onclick="setAzimuthFormat('dms')">度分秒</button>
           <button class="toggle-btn" id="azfmt-deg" onclick="setAzimuthFormat('deg')">10進度</button>
+        </div>
+        <div style="font-size:10.5px; color:var(--label); line-height:1.6; max-width:300px; text-align:center;">
+          ※ 「順計算」「連続計算」タブの方位角入力欄に適用されます。切り替えても<strong style="color:var(--danger);">入力済みの値は自動変換されません</strong>（例：度分秒形式の「135-30-15」のまま10進度に切り替えると誤った数値として計算されます）。切替後は値を入力し直してください。
         </div>
       </div>
     </div>
@@ -571,6 +622,16 @@
           <input type="text" id="faz" placeholder="135-30-15">
         </div>
       </div>
+      <div class="field-hint">
+        <span id="faz-hint-text">距離Dはメートル単位の数値。方位角は現在「度分秒」形式：度-分-秒をハイフンで区切って入力します（例：<strong>135-30-15</strong> → 135°30′15″、分・秒は省略可）。10進度で入力したい場合は上の「⚙ オプション」→「方位角入力形式」を切り替えてください（切替後は入力し直してください）。</span>
+        <span class="help-icon" onclick="toggleHelp('help-fwd-az')" role="button" tabindex="0" aria-label="方位角の入力形式についての詳細">？</span>
+      </div>
+      <div class="help-content" id="help-fwd-az">
+        ・度分秒形式の例：<strong>135-30-15</strong> → 135°30′15″、<strong>135-30</strong> → 135°30′00″（秒省略）、<strong>135</strong> → 135°00′00″（分秒省略）。区切り文字はハイフン「-」です。<br>
+        ・10進度形式の例：<strong>135.5042</strong>（そのまま小数の度数で入力）。<br>
+        ・方位角は北（X軸正方向）を0°として、時計回りに測った角度です（0〜360°）。<br>
+        ・形式を切り替えても既に入力済みの値は自動変換されません。切替後は値を再入力してください。
+      </div>
 
       <div class="error-msg" id="error-fwd"></div>
 
@@ -614,6 +675,13 @@
 
     <div class="card">
       <div class="card-title"><span class="dot"></span>観測データ（距離・方位角）</div>
+      <div class="field-hint" style="margin-top:-4px;">
+        <span>各行は「ひとつ前の点から次の点までの距離・方位角」のペアです。1行目は起点（点0）→点1、2行目は点1→点2…の順に、トラバース測量の要領で連続して計算します。</span>
+        <span class="help-icon" onclick="toggleHelp('help-trav')" role="button" tabindex="0" aria-label="連続計算モードの詳細">？</span>
+      </div>
+      <div class="help-content" id="help-trav">
+        例：起点(X0,Y0)から観測1（距離30m・方位角45°）で点1を求め、点1から観測2（距離20m・方位角120°）で点2を求める…というように、各行の計算結果が次の行の起点になります。距離・方位角の入力形式（度分秒／10進度）は「⚙ オプション」の設定が全行に共通して適用されます。下部「終点 既知座標」を入力すると、最後の計算点との閉合誤差を参考値として表示します（入力は任意）。
+      </div>
       <div id="traverseRows"></div>
       <button class="btn-add-row" onclick="addTraverseRow()">＋ 観測行を追加</button>
     </div>
@@ -737,6 +805,19 @@
 
     document.querySelectorAll('.trav-az-input').forEach(el => { el.placeholder = example; });
     document.querySelectorAll('.trav-az-label').forEach(el => { el.textContent = labelText; });
+
+    const hintEl = document.getElementById('faz-hint-text');
+    if (hintEl) {
+      hintEl.innerHTML = isDms
+        ? '距離Dはメートル単位の数値。方位角は現在「度分秒」形式：度-分-秒をハイフンで区切って入力します（例：<strong>135-30-15</strong> → 135°30′15″、分・秒は省略可）。10進度で入力したい場合は上の「⚙ オプション」→「方位角入力形式」を切り替えてください（切替後は入力し直してください）。'
+        : '距離Dはメートル単位の数値。方位角は現在「10進度」形式：<strong>135.5042</strong> のように小数の度数で入力します。度分秒で入力したい場合は上の「⚙ オプション」→「方位角入力形式」を切り替えてください（切替後は入力し直してください）。';
+    }
+  }
+
+  // ── ？アイコンのヘルプポップアップ開閉 ──
+  function toggleHelp(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('show');
   }
 
   // ── タブ切替 ──

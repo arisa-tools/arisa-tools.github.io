@@ -277,6 +277,54 @@
   }
 
   .footer { text-align: center; padding: 16px 0 4px; font-size: 11px; color: var(--text3); }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin: 6px 0 4px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--text2);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -286,7 +334,7 @@
 <div class="header">
   <div class="badge-row">
     <span class="badge">No.018</span>
-    <span class="version">v1.0</span>
+    <span class="version">v1.1</span>
   </div>
   <div class="title">平面直角座標系⇔緯度経度 変換ツール</div>
   <div class="desc">GNSS実測値（緯度経度）と公共測量成果（平面直角座標）を相互変換</div>
@@ -297,6 +345,13 @@
   <div class="card-title">系番号の選択</div>
   <select class="zone-select" id="zoneSelect" onchange="updateZoneOrigin()"></select>
   <div class="zone-origin" id="zoneOrigin"></div>
+  <div class="field-hint">
+    <span>系（1〜19）ごとに原点となる緯度・経度が定められています。<strong>同じ緯度経度を入力しても、選択した系によって出力されるX/Y座標の値は変わります。</strong>測量成果表・図面に記載されている系番号と必ず一致させて選択してください。</span>
+    <span class="help-icon" onclick="toggleHelp('help-zone')" role="button" tabindex="0" aria-label="系番号についての詳細">？</span>
+  </div>
+  <div class="help-content" id="help-zone">
+    平面直角座標系は日本全国を19の区画（系）に分け、各系ごとに専用の原点（基準となる緯度・経度）を持ちます。この原点からの距離をもとにX（南北）・Y（東西）を計算する仕組みのため、同じ地点でも選ぶ系が違えば座標値は変わります。プルダウンを開くと系ごとの対象地域が確認でき、選択中の系の原点座標は上の「原点：北緯…東経…」に表示されます。系番号を取り違えると座標値が大きくずれるため、実務では必ず測量成果や図面記載の系番号を確認してから選択してください。
+  </div>
 </div>
 
 <!-- タブ -->
@@ -317,16 +372,27 @@
 
     <div class="field-box">
       <div class="field-label">緯度（北緯）</div>
-      <div class="field-sub">例：35.658581　または　35 39 29.1</div>
+      <div class="field-sub">例：35.658581（10進法度）　または　35 39 29.1（度 分 秒・スペース区切り）</div>
       <input type="text" id="latInput" placeholder="35.658581">
       <div class="field-err" id="latErr">緯度は-90〜90の範囲、または正しい度分秒形式で入力してください</div>
     </div>
 
     <div class="field-box">
       <div class="field-label">経度（東経）</div>
-      <div class="field-sub">例：139.745433　または　139 44 43.6</div>
+      <div class="field-sub">例：139.745433（10進法度）　または　139 44 43.6（度 分 秒・スペース区切り）</div>
       <input type="text" id="lonInput" placeholder="139.745433">
       <div class="field-err" id="lonErr">経度は-180〜180の範囲、または正しい度分秒形式で入力してください</div>
+    </div>
+
+    <div class="field-hint" style="margin-top:0;">
+      <span>緯度・経度は「35.658581」のような10進法度、または「35 39 29.1」のように度・分・秒をスペースで区切った度分秒表記のどちらでも入力できます（自動判別）。</span>
+      <span class="help-icon" onclick="toggleHelp('help-latlon')" role="button" tabindex="0" aria-label="緯度経度の入力形式についての詳細">？</span>
+    </div>
+    <div class="help-content" id="help-latlon">
+      ・10進法度：<strong>35.658581</strong> のように小数で入力します（度のみ）。<br>
+      ・度分秒：<strong>35 39 29.1</strong> のように「度 分 秒」の順でスペース区切りで入力します。度記号°・分記号′・秒記号″を付けても（例：35°39′29.1″）、カンマ「,」区切りでも認識します。分・秒は省略可（例：<strong>35 39</strong> → 35°39′00″）。<br>
+      ・南緯・西経の場合は先頭にマイナスを付けてください（例：-35.65）。<br>
+      ・値を入力して変換すると、系番号の対象範囲から外れる場合は警告が表示されます。
     </div>
 
     <button class="btn-calc" onclick="calcB2X()">✦ 平面直角座標に変換</button>
@@ -362,14 +428,27 @@
 
     <div class="field-box">
       <div class="field-label">X（南北・メートル）</div>
+      <div class="field-sub">系原点を基準に、北方向がプラス・南方向がマイナス</div>
       <input type="text" id="xInput" placeholder="-37875.085">
       <div class="field-err" id="xErr">Xは数値で入力してください</div>
     </div>
 
     <div class="field-box">
       <div class="field-label">Y（東西・メートル）</div>
+      <div class="field-sub">系原点を基準に、東方向がプラス・西方向がマイナス</div>
       <input type="text" id="yInput" placeholder="-7958.644">
       <div class="field-err" id="yErr">Yは数値で入力してください</div>
+    </div>
+
+    <div class="field-hint" style="margin-top:0;">
+      <span>X・Yは選択中の系番号の原点を(0, 0)とした座標値（メートル）です。測量成果表・観測データに記載されている値をそのまま入力してください。</span>
+      <span class="help-icon" onclick="toggleHelp('help-xy')" role="button" tabindex="0" aria-label="平面直角座標の入力形式についての詳細">？</span>
+    </div>
+    <div class="help-content" id="help-xy">
+      ・X（南北方向）：原点より北にある地点はプラス、南にある地点はマイナスです。<br>
+      ・Y（東西方向）：原点より東にある地点はプラス、西にある地点はマイナスです。<br>
+      ・単位はどちらもメートル。小数第3位（mm単位）まで入力できます。<br>
+      ・<strong>上部「系番号の選択」が、この座標を測量・作成したときの系番号と一致していることを必ず確認してください。</strong>系が異なると、正しくない緯度経度が算出されます。
     </div>
 
     <button class="btn-calc" onclick="calcX2B()">✦ 緯度経度に変換</button>
@@ -590,6 +669,11 @@ function updateZoneOrigin(){
   const z = getCurrentZone();
   document.getElementById('zoneOrigin').textContent =
     `原点：北緯 ${decimalToDmsStr(z.lat)}　東経 ${decimalToDmsStr(z.lon)}`;
+}
+
+function toggleHelp(id){
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
 }
 
 function switchTab(tab){
