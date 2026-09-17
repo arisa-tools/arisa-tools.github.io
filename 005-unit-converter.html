@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>単位変換ツール v1.1 | arisa-tools</title>
+<title>単位変換ツール v1.2 | arisa-tools</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -211,7 +211,7 @@
   <div class="header">
     <div class="header-icon">📏</div>
     <h1>単位変換ツール</h1>
-    <span class="version">v1.1</span>
+    <span class="version">v1.2</span>
   </div>
 
   <!-- タブ -->
@@ -341,8 +341,8 @@
       <span class="help-icon" onclick="toggleHelp('help-area')" role="button" tabindex="0" aria-label="尺貫法の面積換算基準について">？</span>
     </div>
     <div class="help-content" id="help-area">
-      尺貫法の面積は1坪 = 400/121 m²（≈3.30579m²）を基準に換算しています。<br>
-      ・1畝（10坪）≈ 33.0579m²　・1反（10畝）≈ 330.579m²　・1町（10反）≈ 3305.79m²<br>
+      尺貫法の面積は1坪 = 400/121 m²（≈3.30579m²）を基準に、1畝＝30坪・1反＝10畝（300坪）・1町＝10反（3000坪）として換算しています。<br>
+      ・1畝 ≈ 99.174m²　・1反 ≈ 991.736m²　・1町 ≈ 9917.36m²<br>
       不動産登記・農地面積の慣習表記と一致しますが、地域・分野によって若干異なる定義が使われる場合があります。
     </div>
     <div class="card">
@@ -512,9 +512,9 @@ const AREA = {
   are:   100,         // 1a = 100m²
   ha:    10000,       // 1ha = 10000m²
   tsubo: 400/121,     // 1坪 = 400/121 m² ≈ 3.30579m²
-  se:    4000/121,    // 1畝 = 10坪
-  tan:   40000/121,   // 1反 = 10畝 = 100坪
-  cho:   400000/121,  // 1町 = 10反
+  se:    12000/121,   // 1畝 = 30坪
+  tan:   120000/121,  // 1反 = 10畝 = 300坪
+  cho:   1200000/121, // 1町 = 10反 = 3000坪
 };
 
 let areaLock = false;
