@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>座標計算ツール v2.1 | Aiaこんぶ</title>
+<title>座標計算ツール v2.2 | Aiaこんぶ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -486,7 +486,7 @@
   <div class="header">
     <div class="header-icon">📐</div>
     <h1>座標計算ツール</h1>
-    <span class="version">v2.1</span>
+    <span class="version">v2.2</span>
     <div class="tool-desc-header">2点座標の逆計算・放射計算（順計算）・連続観測点のトラバース計算（連続計算）に対応</div>
 
     <!-- オプション -->
@@ -661,6 +661,22 @@
   <div class="mode-content" id="mode-traverse">
     <div class="card">
       <div class="card-title"><span class="dot"></span>起点座標</div>
+
+      <div class="toggle-row" style="margin-bottom:10px;">
+        <span style="font-size:11px; color:var(--label);">角度入力方式</span>
+        <button class="toggle-btn active" id="travmode-az" onclick="setTravAngleMode('az')">方位角</button>
+        <button class="toggle-btn" id="travmode-obs" onclick="setTravAngleMode('obs')">観測角</button>
+      </div>
+      <div class="field-hint" style="margin-top:-2px;">
+        <span id="travmode-hint-text">「方位角」モード：各観測行に、ひとつ前の点から見た方位角（北を0°とし時計回り）を直接入力します。「観測角」モード：TS実務向けに、器械点で後視点を0°として時計回りに測った角度（観測角）を入力します（起点の後視方位角の入力が別途必要です）。</span>
+        <span class="help-icon" onclick="toggleHelp('help-travmode')" role="button" tabindex="0" aria-label="角度入力方式の詳細">？</span>
+      </div>
+      <div class="help-content" id="help-travmode">
+        ・「方位角」モード（従来通り）：各行に、ひとつ前の点から次の点への方位角（北基準・時計回り0〜360°）を直接入力します。<br>
+        ・「観測角」モード（新規）：実際のTS観測に合わせ、器械を据えた点で後視点を0°として時計回りに測った水平角（観測角）を入力します。起点（点0）についてのみ、後視点から起点を見た方位角を下の「後視方位角」欄に入力してください。2点目以降は、ひとつ前の点が自動的に後視点として扱われます。<br>
+        ・両モードは排他的で、切り替えると観測行のラベルが連動して変わります。切替えても入力済みの値は変換されません。
+      </div>
+
       <div class="input-row" style="margin-bottom:0;">
         <div class="input-group">
           <label>X0（北方向）</label>
@@ -671,12 +687,24 @@
           <input type="text" id="trav-y0" inputmode="decimal" placeholder="67890.123">
         </div>
       </div>
+
+      <div class="input-group" id="trav-backaz-wrap" style="display:none; margin-top:14px;">
+        <label id="trav-backaz-label">後視方位角（度分秒）</label>
+        <input type="text" id="trav-backaz" placeholder="135-30-15">
+      </div>
+      <div class="field-hint" id="trav-backaz-hint" style="display:none; margin-top:6px; margin-bottom:0;">
+        <span id="trav-backaz-hint-text">後視点から起点を見た方位角を入力します（起点から後視点を見た方位角ではありません。180°反転した値です）。</span>
+        <span class="help-icon" onclick="toggleHelp('help-trav-backaz')" role="button" tabindex="0" aria-label="後視方位角の詳細">？</span>
+      </div>
+      <div class="help-content" id="help-trav-backaz">
+        例：器械点をA（起点）、後視点をB、最初に求める点をCとします。Aに器械を据えてBを見て水平角0°にセット（後視）、そこから時計回りにCを見た角度が「観測角」です。このとき<strong>方位角(A→C) = 方位角(B→A) + 180° + 観測角</strong>という式で計算するため、「後視方位角」には<strong>方位角(B→A)＝後視点から起点を見た方位角</strong>を入力してください。分かっているのが「起点→後視点」の方位角（方位角(A→B)）の場合は、180°足すか引くかして変換してから入力してください（例：方位角(A→B)が50°なら、方位角(B→A)は230°）。2点目以降の観測では、ひとつ前の点が自動的に後視点として扱われるため、この欄への入力は起点（点0）の1回だけで済みます。
+      </div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="dot"></span>観測データ（距離・方位角）</div>
+      <div class="card-title" id="trav-obs-card-title"><span class="dot"></span>観測データ（距離・方位角）</div>
       <div class="field-hint" style="margin-top:-4px;">
-        <span>各行は「ひとつ前の点から次の点までの距離・方位角」のペアです。1行目は起点（点0）→点1、2行目は点1→点2…の順に、トラバース測量の要領で連続して計算します。</span>
+        <span id="trav-hint-text">各行は「ひとつ前の点から次の点までの距離・方位角」のペアです。1行目は起点（点0）→点1、2行目は点1→点2…の順に、トラバース測量の要領で連続して計算します。</span>
         <span class="help-icon" onclick="toggleHelp('help-trav')" role="button" tabindex="0" aria-label="連続計算モードの詳細">？</span>
       </div>
       <div class="help-content" id="help-trav">
@@ -733,6 +761,7 @@
   let decimalPlaces = 4;
   let optionOpen = false;
   let currentTab = 'inverse';
+  let travAngleMode = 'az';         // モード3：角度入力方式（'az'=方位角 / 'obs'=観測角）
 
   let calcResult = null; // モード1
   let fwdResult = null;  // モード2
@@ -797,6 +826,9 @@
     const isDms = azimuthInputFormat === 'dms';
     const example = isDms ? '135-30-15' : '135.5000';
     const labelText = isDms ? '方位角（度分秒）' : '方位角（10進度）';
+    const travAngleWord = travAngleMode === 'obs' ? '観測角' : '方位角';
+    const travLabelText = isDms ? travAngleWord + '（度分秒）' : travAngleWord + '（10進度）';
+    const backAzLabelText = isDms ? '後視方位角（度分秒）' : '後視方位角（10進度）';
 
     const fazInput = document.getElementById('faz');
     if (fazInput) fazInput.placeholder = example;
@@ -804,7 +836,12 @@
     if (fazLabel) fazLabel.textContent = labelText;
 
     document.querySelectorAll('.trav-az-input').forEach(el => { el.placeholder = example; });
-    document.querySelectorAll('.trav-az-label').forEach(el => { el.textContent = labelText; });
+    document.querySelectorAll('.trav-az-label').forEach(el => { el.textContent = travLabelText; });
+
+    const backAzInput = document.getElementById('trav-backaz');
+    if (backAzInput) backAzInput.placeholder = example;
+    const backAzLabel = document.getElementById('trav-backaz-label');
+    if (backAzLabel) backAzLabel.textContent = backAzLabelText;
 
     const hintEl = document.getElementById('faz-hint-text');
     if (hintEl) {
@@ -818,6 +855,31 @@
   function toggleHelp(id) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('show');
+  }
+
+  // ── 連続計算：角度入力方式（方位角／観測角）切替 ──
+  function setTravAngleMode(mode) {
+    travAngleMode = mode;
+    document.getElementById('travmode-az').classList.toggle('active', mode === 'az');
+    document.getElementById('travmode-obs').classList.toggle('active', mode === 'obs');
+
+    const show = mode === 'obs';
+    document.getElementById('trav-backaz-wrap').style.display = show ? 'flex' : 'none';
+    document.getElementById('trav-backaz-hint').style.display = show ? 'flex' : 'none';
+
+    document.getElementById('trav-obs-card-title').innerHTML = show
+      ? '<span class="dot"></span>観測データ（距離・観測角）'
+      : '<span class="dot"></span>観測データ（距離・方位角）';
+
+    document.getElementById('trav-hint-text').textContent = show
+      ? '各行は「その点に器械を据えて後視点を0°とし、時計回りに測った観測角」と「次の点までの距離」のペアです。1行目は起点（点0、後視は上の後視方位角）→点1、2行目は点1（後視は点0）→点2…の順に、トラバース測量の要領で連続して計算します。'
+      : '各行は「ひとつ前の点から次の点までの距離・方位角」のペアです。1行目は起点（点0）→点1、2行目は点1→点2…の順に、トラバース測量の要領で連続して計算します。';
+
+    document.getElementById('help-trav').innerHTML = show
+      ? '例：起点Aに器械を据え、後視点Bを0°として時計回りにC（点1）を観測（観測角1）、距離30mで点1を求める。次に点1に器械を据え、後視はA（ひとつ前の点）を0°として時計回りに点2を観測（観測角2）、距離20mで点2を求める…というように、各行の計算結果が次の行の器械点になります。方位角の逐次計算式：<strong>今回の方位角 = 前回の方位角 + 180° + 観測角</strong>（360°で正規化）。距離・角度の入力形式（度分秒／10進度）は「⚙ オプション」の設定が全行に共通して適用されます。下部「終点 既知座標」を入力すると、最後の計算点との閉合誤差を参考値として表示します（入力は任意）。'
+      : '例：起点(X0,Y0)から観測1（距離30m・方位角45°）で点1を求め、点1から観測2（距離20m・方位角120°）で点2を求める…というように、各行の計算結果が次の行の起点になります。距離・方位角の入力形式（度分秒／10進度）は「⚙ オプション」の設定が全行に共通して適用されます。下部「終点 既知座標」を入力すると、最後の計算点との閉合誤差を参考値として表示します（入力は任意）。';
+
+    updateAzimuthPlaceholders();
   }
 
   // ── タブ切替 ──
@@ -979,7 +1041,8 @@
     row.className = 'traverse-row';
 
     const isDms = azimuthInputFormat === 'dms';
-    const azLabel = isDms ? '方位角（度分秒）' : '方位角（10進度）';
+    const angleWord = travAngleMode === 'obs' ? '観測角' : '方位角';
+    const azLabel = isDms ? angleWord + '（度分秒）' : angleWord + '（10進度）';
     const azPlaceholder = isDms ? '135-30-15' : '135.5000';
 
     row.innerHTML =
@@ -1033,6 +1096,22 @@
       return;
     }
 
+    let seedAz = NaN;
+    if (travAngleMode === 'obs') {
+      const backAzStr = document.getElementById('trav-backaz').value.trim();
+      if (backAzStr === '') {
+        errEl.textContent = '※ 後視方位角を入力してください';
+        errEl.classList.add('show');
+        return;
+      }
+      seedAz = parseAzimuthInput(backAzStr);
+      if (isNaN(seedAz)) {
+        errEl.textContent = '※ 後視方位角を正しい数値で入力してください';
+        errEl.classList.add('show');
+        return;
+      }
+    }
+
     const rows = document.querySelectorAll('#traverseRows .traverse-row');
     if (rows.length === 0) {
       errEl.textContent = '※ 観測行を1行以上追加してください';
@@ -1040,36 +1119,53 @@
       return;
     }
 
+    const angleWord = travAngleMode === 'obs' ? '観測角' : '方位角';
     const legs = [];
     for (let i = 0; i < rows.length; i++) {
       const distStr = rows[i].querySelector('.trav-dist-input').value.trim();
       const azStr = rows[i].querySelector('.trav-az-input').value.trim();
 
       if (distStr === '' || azStr === '') {
-        errEl.textContent = '※ 観測 ' + (i + 1) + ' の距離・方位角を入力してください';
+        errEl.textContent = '※ 観測 ' + (i + 1) + ' の距離・' + angleWord + 'を入力してください';
         errEl.classList.add('show');
         return;
       }
 
       const d = parseFloat(distStr);
-      const az = parseAzimuthInput(azStr);
+      const val = parseAzimuthInput(azStr);
 
-      if (isNaN(d) || isNaN(az)) {
+      if (isNaN(d) || isNaN(val)) {
         errEl.textContent = '※ 観測 ' + (i + 1) + ' の入力値を確認してください（数値で入力）';
         errEl.classList.add('show');
         return;
       }
 
-      legs.push({ d, az });
+      legs.push({ d, val });
     }
 
     let cx = x0, cy = y0;
     const points = [{ x: cx, y: cy }];
-    for (const leg of legs) {
-      const rad = leg.az * Math.PI / 180;
-      cx = cx + leg.d * Math.cos(rad);
-      cy = cy + leg.d * Math.sin(rad);
-      points.push({ x: cx, y: cy });
+
+    if (travAngleMode === 'obs') {
+      // 観測角モード：今回の方位角 = 前回の方位角 + 180° + 観測角（360°で正規化）
+      let prevAz = seedAz;
+      for (const leg of legs) {
+        let az = prevAz + 180 + leg.val;
+        az = ((az % 360) + 360) % 360;
+        const rad = az * Math.PI / 180;
+        cx = cx + leg.d * Math.cos(rad);
+        cy = cy + leg.d * Math.sin(rad);
+        points.push({ x: cx, y: cy });
+        prevAz = az;
+      }
+    } else {
+      // 方位角モード（従来通り）
+      for (const leg of legs) {
+        const rad = leg.val * Math.PI / 180;
+        cx = cx + leg.d * Math.cos(rad);
+        cy = cy + leg.d * Math.sin(rad);
+        points.push({ x: cx, y: cy });
+      }
     }
 
     let xn = NaN, yn = NaN;
@@ -1131,6 +1227,7 @@
   function clearTraverse() {
     document.getElementById('trav-x0').value = '';
     document.getElementById('trav-y0').value = '';
+    document.getElementById('trav-backaz').value = '';
     document.getElementById('trav-xn').value = '';
     document.getElementById('trav-yn').value = '';
     document.getElementById('traverseRows').innerHTML = '';
