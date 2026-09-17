@@ -428,13 +428,61 @@
   }
 
   .processing { animation: pulse 1s infinite; }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    padding: 10px 16px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--teal); color: var(--teal); }
+
+  .help-content {
+    display: none;
+    margin: 8px 16px 0;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--teal); }
 </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <div class="badge">PRIVACY MASKER v1.0</div>
+    <div class="badge">PRIVACY MASKER v1.1</div>
     <h1>機密・個人情報を<span>自動でマスク</span></h1>
     <p class="subtitle">テキストを貼り付けるだけで、個人情報・機密情報を<br>[ラベル]に自動置換します</p>
     <div class="security-note">
@@ -468,6 +516,21 @@
           INPUT
         </div>
         <span class="char-count" id="charCount">0文字</span>
+      </div>
+      <div class="field-hint">
+        <span>上のトグルでマスク対象カテゴリ（氏名・住所・電話番号など）を個別にON/OFFできます。パターンマッチによる自動検出のため完全ではありません。実行後は必ず出力を目視確認してください。</span>
+        <span class="help-icon" onclick="toggleHelp('help-mask-rules')" role="button" tabindex="0" aria-label="検出パターンの詳細">？</span>
+      </div>
+      <div class="help-content" id="help-mask-rules">
+        ・<strong>氏名</strong>：「姓 名」のようにスペース区切りの漢字2〜4文字、または「田中太郎様／さん／氏」のような敬称付き表記を検出します。スペースなし表記（例：田中太郎）は検出されない場合があります。<br>
+        ・<strong>住所</strong>：郵便番号（〒100-0001形式）、または都道府県名から始まる表記を検出します。<br>
+        ・<strong>電話番号</strong>：TEL/FAX等の接頭辞付き、またはハイフン区切りの数字（例：03-1234-5678）を検出します。<br>
+        ・<strong>メールアドレス</strong>：一般的な「◯◯@◯◯.◯◯」形式を検出します。<br>
+        ・<strong>会社名・組織名</strong>：株式会社・有限会社等の法人格を含む表記を検出します。<br>
+        ・<strong>マイナンバー・社員番号</strong>：12桁の数字、または「社員番号：」等の接頭辞付き番号を検出します。<br>
+        ・<strong>生年月日</strong>：「生年月日：」「誕生日：」等の接頭辞付き日付表記を検出します。<br>
+        ・<strong>機密・社外秘情報</strong>：「社外秘」「機密」等のキーワードを含む一文、または金額表記を検出します。<br>
+        いずれもルールベースの検出のため、表記ゆれ（全角/半角混在・改行・特殊な書式）によっては見逃し・誤検出が起こり得ます。重要な文書では出力結果を必ず目視確認してください。
       </div>
       <textarea id="inputText" placeholder="ここにテキストを貼り付けてください。
 
@@ -769,6 +832,12 @@ function showToast(msg) {
 document.getElementById('inputText').addEventListener('input', function() {
   document.getElementById('charCount').textContent = this.value.length + '文字';
 });
+
+// ===== ？アイコンのヘルプポップアップ開閉 =====
+function toggleHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
 
 // ===== Init =====
 initToggles();

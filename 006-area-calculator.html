@@ -376,6 +376,54 @@
     border-radius: 2px;
   }
   .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -384,7 +432,7 @@
   <header>
     <div class="badge">No.006</div>
     <h1>座標面積計算ツール</h1>
-    <div class="sub">Gauss's Area Formula　v1.0</div>
+    <div class="sub">Gauss's Area Formula　v1.1</div>
   </header>
 
   <div class="layout">
@@ -393,6 +441,15 @@
     <div class="panel">
       <div class="panel-header"><span class="dot"></span>座標入力（手動）</div>
       <div class="panel-body">
+        <div class="field-hint">
+          <span>点は多角形の周囲に沿った順序（時計回り・反時計回りいずれも可）で入力してください。最後の点は自動的に最初の点へ戻って閉合し面積を計算します。3点以上必要です。</span>
+          <span class="help-icon" onclick="toggleHelp('help-coord')" role="button" tabindex="0" aria-label="座標入力・計算方法の詳細">？</span>
+        </div>
+        <div class="help-content" id="help-coord">
+          ・X＝北方向、Y＝東方向の測量座標系です（数学の一般的なXY軸とは向きが異なります）。<br>
+          ・点の順序が周囲に沿っていない（順不同・交差する）場合、正しい面積が計算されません。<br>
+          ・計算方式は「ガウスの面積公式（座標法）」：各辺のXi×Yj−Xj×Yiの総和の絶対値の1/2が面積になります。詳細な計算過程は計算後に「ガウス計算式」タブで確認できます。
+        </div>
         <table class="coord-table">
           <thead>
             <tr>
@@ -427,7 +484,8 @@
         <p class="bulk-hint">
           フォーマット：<b>点名　X（北）　Y（東）</b><br>
           区切りは「タブ」または「スペース」。1行1点。<br>
-          ExcelやCSVからそのまま貼り付けOK。
+          ExcelやCSVからそのまま貼り付けOK。<br>
+          点は多角形の周囲に沿った順序で入力してください（読み込み後の並べ替えはしません）。
         </p>
         <div class="btn-row" style="margin-top:10px;">
           <button class="btn-primary" onclick="importBulk()">読み込む</button>
@@ -857,6 +915,10 @@ function showMsg(id, type, text) {
 }
 function showResult() { document.getElementById('result-section').style.display = ''; }
 function hideResult() { document.getElementById('result-section').style.display = 'none'; }
+function toggleHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
 
 // =============================================
 // 起動

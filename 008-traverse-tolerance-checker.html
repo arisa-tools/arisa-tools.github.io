@@ -382,6 +382,54 @@
     height: 1px;
     background: var(--border);
   }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 11.5px;
+    color: var(--text2);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent2); }
 </style>
 </head>
 <body>
@@ -389,7 +437,7 @@
 <div class="header">
   <div class="badge-row">
     <span class="badge">No.008</span>
-    <span class="version">v1.2</span>
+    <span class="version">v1.3</span>
   </div>
   <div class="title">基準点測量 許容値チェッカー</div>
   <div class="desc">令和7年改正 作業規程準則準拠｜トラバース閉合差・許容値を自動判定</div>
@@ -398,6 +446,14 @@
 <!-- 設定カード -->
 <div class="card">
   <div class="card-title">測量種別の選択</div>
+  <div class="field-hint">
+    <span>級は測量成果に求められる精度区分です（1級が最も高精度・街区が最も緩い）。トラバース種別は既知点2点間を結ぶ「結合」か、始点に戻る「閉合」かを選びます。</span>
+    <span class="help-icon" onclick="toggleHelp('help-grade')" role="button" tabindex="0" aria-label="級・トラバース種別の詳細">？</span>
+  </div>
+  <div class="help-content" id="help-grade">
+    ・級は作業規程の準則における基準点測量の区分（1級・2級・3級・4級・街区基準点測量）です。どの級で実施するかは、作業計画書・仕様書の指定に従ってください。<br>
+    ・「結合トラバース」は既知の2点（既知点・既知方向角）を結んで新点を求める方式、「閉合トラバース」は出発点に戻って自己閉合させる方式です。方向角閉合差の許容値が種別によって変わります。
+  </div>
 
   <div class="sep">級</div>
   <div class="btn-group">
@@ -418,6 +474,14 @@
 <!-- 観測条件カード -->
 <div class="card">
   <div class="card-title">観測条件の入力</div>
+  <div class="field-hint">
+    <span>辺数nはトラバース路線の測点間の辺（区間）の数、総距離Sは各辺の距離を合計した路線全長（m）です。両方とも許容値の計算に使われます。</span>
+    <span class="help-icon" onclick="toggleHelp('help-obs')" role="button" tabindex="0" aria-label="辺数・総距離の詳細">？</span>
+  </div>
+  <div class="help-content" id="help-obs">
+    ・<strong>辺数 n</strong>：測点A→B→C→…と結んだときの辺（線分）の本数。5点を結ぶ路線なら辺数は4（閉合トラバースで出発点に戻る場合は5）のように、実際の観測構成に応じて数えます。<br>
+    ・<strong>総距離 S</strong>：全辺の水平距離を合計した値（m）。距離閉合差の許容値（S/距離閉合比）・座標閉合差の許容値（係数×√S）の両方の計算に使用します。
+  </div>
   <div class="field-group">
     <div class="field">
       <label>辺数 n</label>
@@ -435,6 +499,15 @@
 <!-- 観測値カード -->
 <div class="card">
   <div class="card-title">閉合差の入力</div>
+  <div class="field-hint">
+    <span>各欄は現地観測データから計算済みの閉合差（誤差）の値を入力します。未入力の項目は許容値のみ表示し、判定はスキップされます。符号（＋－）は問わず絶対値で判定します。</span>
+    <span class="help-icon" onclick="toggleHelp('help-close')" role="button" tabindex="0" aria-label="閉合差の入力について">？</span>
+  </div>
+  <div class="help-content" id="help-close">
+    ・4項目とも本ツールでは計算しません。トラバース計算（平均計算）の結果として得られる閉合差の数値をそのまま入力してください。<br>
+    ・入力は一部のみでも判定できます（例：座標閉合差だけ入力すればその項目だけOK/NG判定）。<br>
+    ・「距離 閉合差」は許容比（1/2000等）との比較、「座標 閉合差」は√(ΔX²+ΔY²)の値をそのまま入力します。
+  </div>
   <div class="field-group">
     <div class="field">
       <label>水平角観測 閉合差</label>
@@ -722,6 +795,11 @@ function displayResults(results, ngCount, checkedCount, tol, traverse) {
 
   document.getElementById('results').className = 'results show';
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
 }
 
 function resetAll() {

@@ -308,6 +308,54 @@
     transition: color 0.15s;
   }
   .btn-del:hover { color: #e74c3c; }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 11.5px;
+    color: var(--text2);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent2); }
 </style>
 </head>
 <body>
@@ -315,7 +363,7 @@
 <div class="header">
   <div class="badge-row">
     <span class="badge">No.010</span>
-    <span class="version">v1.0</span>
+    <span class="version">v1.1</span>
   </div>
   <div class="title">水平距離・高低差計算ツール</div>
   <div class="desc">斜距離＋天頂角 → 水平距離・高低差を計算</div>
@@ -330,6 +378,15 @@
 <!-- 入力カード -->
 <div class="card">
   <div class="card-title">観測値の入力</div>
+  <div class="field-hint">
+    <span>天頂角は天頂（真上）を0°とする角度で、90°がちょうど水平です。TS等の器械が表示する天頂角の値をそのまま度・分・秒に分けて入力してください。</span>
+    <span class="help-icon" onclick="toggleHelp('help-zenith')" role="button" tabindex="0" aria-label="天頂角の詳細">？</span>
+  </div>
+  <div class="help-content" id="help-zenith">
+    ・天頂角90°ちょうどなら水平距離＝斜距離、高低差＝0になります。<br>
+    ・90°未満（例：85°）は視準点が観測点より高い位置＝高低差はプラス、90°超（例：95°）は低い位置＝高低差はマイナスで表示されます。<br>
+    ・鉛直角（水平を0°とする器械）を使っている場合は、90°−鉛直角の値を天頂角として入力してください。
+  </div>
   <div id="inputRows"></div>
   <div class="btn-row">
     <button class="btn-add" onclick="addRow()">＋ 行を追加</button>
@@ -484,6 +541,11 @@ function copyText() {
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
   });
+}
+
+function toggleHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
 }
 
 function resetAll() {

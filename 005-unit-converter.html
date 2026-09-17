@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>単位変換ツール v1.0 | arisa-tools</title>
+<title>単位変換ツール v1.1 | arisa-tools</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -154,6 +154,54 @@
 
   /* ── フッター ── */
   .footer { text-align:center; padding:16px 0; font-size:11px; color:var(--label); }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    margin: -2px 0 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--label);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -163,7 +211,7 @@
   <div class="header">
     <div class="header-icon">📏</div>
     <h1>単位変換ツール</h1>
-    <span class="version">v1.0</span>
+    <span class="version">v1.1</span>
   </div>
 
   <!-- タブ -->
@@ -175,6 +223,15 @@
 
   <!-- 長さパネル -->
   <div class="panel active" id="panel-length">
+    <div class="field-hint">
+      <span>いずれかの欄に数値を入力すると、他の単位に自動で換算されます（メートル法↔尺貫法も相互変換）。</span>
+      <span class="help-icon" onclick="toggleHelp('help-length')" role="button" tabindex="0" aria-label="尺貫法の換算基準について">？</span>
+    </div>
+    <div class="help-content" id="help-length">
+      尺貫法は明治24年度量衡法の定義（1尺 = 10/33 m）を基準に換算しています。<br>
+      ・1尺 ≈ 303.030303mm　・1間（6尺）≈ 1818.18182mm　・1丈（10尺）≈ 3030.30303mm　・1里（36町）≈ 3927.27273m<br>
+      建築・測量分野の慣習で若干異なる定義が使われる場合がありますが、本ツールは上記の公式換算値を使用しています。
+    </div>
     <div class="card">
       <div class="card-title"><span class="dot"></span>メートル法</div>
       <div class="unit-row">
@@ -219,6 +276,16 @@
 
   <!-- 角度パネル -->
   <div class="panel" id="panel-angle">
+    <div class="field-hint">
+      <span>いずれかの欄に数値を入力すると、他の表記に自動で換算されます。度分秒は「度」「分」「秒」を別々の欄に分けて入力します（60を超えると自動で繰り上がります）。</span>
+      <span class="help-icon" onclick="toggleHelp('help-angle')" role="button" tabindex="0" aria-label="角度単位の詳細">？</span>
+    </div>
+    <div class="help-content" id="help-angle">
+      ・<strong>度分秒（DMS）</strong>：度・分・秒をそれぞれ別の欄に入力します（例：135°30′15″なら「135」「30」「15」）。＋－ボタンで1単位ずつ増減できます。<br>
+      ・<strong>10進度</strong>：135.5042 のように小数の度数で入力します。<br>
+      ・<strong>ラジアン</strong>：度 × π/180 の値です。<br>
+      ・<strong>円弧（gon/grad）</strong>：直角を100gonとする単位です（1gon = 0.9°）。測量の一部機器・欧州規格で使用されます。
+    </div>
     <div class="card">
       <div class="card-title"><span class="dot green"></span>角度変換</div>
 
@@ -269,6 +336,15 @@
 
   <!-- 面積パネル -->
   <div class="panel" id="panel-area">
+    <div class="field-hint">
+      <span>いずれかの欄に数値を入力すると、他の単位に自動で換算されます（SI単位↔尺貫法も相互変換）。</span>
+      <span class="help-icon" onclick="toggleHelp('help-area')" role="button" tabindex="0" aria-label="尺貫法の面積換算基準について">？</span>
+    </div>
+    <div class="help-content" id="help-area">
+      尺貫法の面積は1坪 = 400/121 m²（≈3.30579m²）を基準に換算しています。<br>
+      ・1畝（10坪）≈ 33.0579m²　・1反（10畝）≈ 330.579m²　・1町（10反）≈ 3305.79m²<br>
+      不動産登記・農地面積の慣習表記と一致しますが、地域・分野によって若干異なる定義が使われる場合があります。
+    </div>
     <div class="card">
       <div class="card-title"><span class="dot orange"></span>SI単位</div>
       <div class="unit-row">
@@ -311,6 +387,12 @@
 </div>
 
 <script>
+// ── ？アイコンのヘルプポップアップ開閉 ──
+function toggleHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
+
 // ── タブ切り替え ──
 function switchTab(tab) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));

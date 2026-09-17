@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>No.007 観測手簿補完ツール v1.0</title>
+<title>No.007 観測手簿補完ツール v1.1</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -420,6 +420,54 @@
 
   .error-msg.show { display: block; }
 
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    margin: 10px 0 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.75;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent2); }
+
   /* レスポンシブ */
   @media (max-width: 600px) {
     .point-table td input.deg { width: 44px; }
@@ -436,7 +484,7 @@
 <header>
   <div class="badge">No.007</div>
   <h1>観測手簿補完ツール</h1>
-  <p>正方向の観測値を入力 → 反方向を自動生成して1対回完成　<span style="color:var(--accent2);font-size:12px;font-weight:700;">v1.0</span></p>
+  <p>正方向の観測値を入力 → 反方向を自動生成して1対回完成　<span style="color:var(--accent2);font-size:12px;font-weight:700;">v1.1</span></p>
 </header>
 
 <!-- 設定 -->
@@ -462,6 +510,13 @@
       <label>観測日（任意）</label>
       <input type="date" id="obsDate" style="width:150px;">
     </div>
+    <div class="field-hint">
+      <span>「誤差範囲」は反方向の値に加える乱数の幅です。実観測の再現・練習用データ作成を想定した機能で、理論上ぴったり一致する正反データに、機械の読み取り誤差らしいばらつきを持たせます。</span>
+      <span class="help-icon" onclick="toggleHelp('help-settings')" role="button" tabindex="0" aria-label="このツールの用途について">？</span>
+    </div>
+    <div class="help-content" id="help-settings">
+      このツールは、<strong>正方向の観測値（1点分）だけを入力すると、反方向の値を理論式（水平角＝正+180°、鉛直角＝360°−正）から自動計算し、1対回分の観測手簿を仕上げてくれる</strong>ツールです。実際の器械観測を代替するものではなく、練習用の観測手簿サンプル作成・検算用の理論値確認などの用途を想定しています。「誤差なし」を選べば純粋な理論値のみを表示します。
+    </div>
   </div>
 </div>
 
@@ -482,6 +537,15 @@
       </thead>
       <tbody id="inputBody"></tbody>
     </table>
+  </div>
+  <div class="field-hint">
+    <span>水平角・鉛直角は「度」「分」「秒」を別々の欄に入力します。鉛直角を未入力（0°0′0″）のままにすると天頂距離90°として扱われます。距離①②は2回測定した値（片方のみでも可）を入力してください。</span>
+    <span class="help-icon" onclick="toggleHelp('help-input')" role="button" tabindex="0" aria-label="入力項目の詳細">？</span>
+  </div>
+  <div class="help-content" id="help-input">
+    ・<strong>水平角・鉛直角</strong>：例えば135°30′15″なら「度」欄に135、「分」欄に30、「秒」欄に15.0と入力します。<br>
+    ・<strong>鉛直角</strong>：天頂を0°とする器械もありますが、本ツールでは未入力時に90°（水平）とみなします。実際の観測値がある場合はそのまま入力してください。<br>
+    ・<strong>距離①・距離②</strong>：TS等で2回測定した斜距離（m）。両方入力すると平均値が「正方向」の代表値として扱われ、反方向は誤差範囲の乱数を加えた2値が生成されます。
   </div>
   <button class="btn-add" onclick="addRow()">＋ 視準点を追加</button>
 </div>
@@ -823,6 +887,12 @@
         btn.classList.remove('copied');
       }, 2000);
     });
+  }
+
+  // ？アイコンのヘルプポップアップ開閉
+  function toggleHelp(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('show');
   }
 
   // 初期表示：3行追加

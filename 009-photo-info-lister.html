@@ -327,6 +327,57 @@
   }
 
   .hidden { display: none; }
+
+  /* ── フィールドヒント／ヘルプ ── */
+  .field-hint {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin: 10px 0 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    justify-content: center;
+    text-align: left;
+  }
+
+  .field-hint .help-icon { margin-top: 1px; }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .help-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  .help-content {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 11.5px;
+    color: var(--text2);
+    line-height: 1.75;
+    text-align: left;
+  }
+
+  .help-content.show { display: block; }
+  .help-content strong { color: var(--accent2); }
 </style>
 </head>
 <body>
@@ -334,7 +385,7 @@
 <div class="header">
   <div class="badge-row">
     <span class="badge">No.009</span>
-    <span class="version">v1.2</span>
+    <span class="version">v1.3</span>
   </div>
   <div class="title">写真情報リストアップツール</div>
   <div class="desc">画像をまとめてアップ → ファイル名・撮影日時を一覧テキスト化</div>
@@ -347,6 +398,15 @@
   <div class="drop-sub">JPG / JPEG 複数枚対応</div>
   <button class="drop-btn" onclick="document.getElementById('fileInput').click()">ファイルを選択</button>
   <input type="file" id="fileInput" accept="image/*" multiple>
+  <div class="field-hint">
+    <span>スマホ/デジカメ撮影のJPEG画像が対象です。撮影日時はEXIF情報（DateTimeOriginal等）から読み取ります。</span>
+    <span class="help-icon" onclick="toggleHelp('help-exif')" role="button" tabindex="0" aria-label="EXIF読み取りの制限事項">？</span>
+  </div>
+  <div class="help-content" id="help-exif">
+    ・LINE・SNS経由で保存した画像やスクリーンショットはEXIF情報が失われていることが多く、その場合「日付不明」と表示されます。<br>
+    ・PNG画像は通常EXIF情報を持たないため、撮影日時は取得できません。<br>
+    ・画像はブラウザ内でのみ読み込まれ、サーバーには送信されません。
+  </div>
 </div>
 
 <!-- 一覧テーブル -->
@@ -513,6 +573,11 @@ fileInput.addEventListener('change', e => processFiles(e.target.files));
 document.querySelectorAll('input[name="fmt"]').forEach(r => {
   r.addEventListener('change', renderOutput);
 });
+
+function toggleHelp(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
 
 function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
