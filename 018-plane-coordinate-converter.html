@@ -288,6 +288,9 @@
     margin-bottom: 10px;
   }
 
+  /* ── 免責文 ── */
+  .disclaimer { margin: 16px 0 0; font-size: 11px; line-height: 1.7; color: var(--text2); text-align: left; }
+
   .footer { text-align: center; padding: 16px 0 4px; font-size: 11px; color: var(--text3); }
 
   .footer-nav { text-align: left; padding-top: 16px; }
@@ -360,7 +363,7 @@
   </div>
   <div class="badge-row">
     <span class="badge">No.018</span>
-    <span class="version">v1.1</span>
+    <span class="version">v1.2</span>
   </div>
   <div class="title">平面直角座標系⇔緯度経度 変換ツール</div>
   <div class="desc">GNSS実測値（緯度経度）と公共測量成果（平面直角座標）を相互変換</div>
@@ -499,6 +502,8 @@
     <button class="btn-reset" onclick="resetPanel('x2b')">↺ リセット</button>
   </div>
 </div>
+
+<p class="disclaimer">計算結果は参考値です。公共測量など成果として使う場合は、所定の手続きに従い、別の方法で検算してください。本ツールの利用により生じた損害について、運営者は責任を負いません。</p>
 
 <div class="copy-toast" id="copyToast">コピーしました！</div>
 
