@@ -1,0 +1,5 @@
+# Claude Codeの個人設定（許可したコマンドがそのまま保存されるため、コミットしない）
+.claude/settings.local.json
+# 鍵・環境変数ファイル
+.env
+.env.*
